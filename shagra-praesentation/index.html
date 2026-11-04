@@ -1,0 +1,838 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shagra Morakai</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=IM+Fell+English+SC&family=IM+Fell+English:ital@1&display=swap" rel="stylesheet">
+<style>
+:root {
+  --parchment: #eee5ce;
+  --parchment-dark: #e2d6b5;
+  --ink: #1f1a17;
+  --header: #58180d;
+  --gold: #c9ad6a;
+  --note: #e0e5c1;
+  --desc: #faf7ea;
+  --blood: #8a1c0f;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: #1b1512; overflow: hidden; }
+body { font-family: "EB Garamond", Georgia, serif; color: var(--ink); }
+
+/* Bühne: feste 1600×900, wird per JS auf das Fenster skaliert */
+#stage {
+  position: absolute; left: 50%; top: 50%;
+  width: 1600px; height: 900px;
+  transform-origin: center center;
+  box-shadow: 0 0 60px rgba(0,0,0,.6);
+}
+.slide {
+  position: absolute; inset: 0;
+  padding: 70px 90px 80px;
+  background:
+    radial-gradient(ellipse at 20% 10%, rgba(255,255,255,.35), transparent 60%),
+    radial-gradient(ellipse at 85% 90%, rgba(150,110,60,.18), transparent 55%),
+    radial-gradient(circle at 50% 50%, transparent 70%, rgba(120,85,40,.25) 100%),
+    var(--parchment);
+  opacity: 0; visibility: hidden;
+  transition: opacity .5s ease, visibility .5s;
+  overflow: hidden;
+}
+.slide.active { opacity: 1; visibility: visible; }
+
+/* Typografie im Homebrewery-Stil */
+h1, h2, h3, h4 { font-family: "IM Fell English SC", Georgia, serif; color: var(--header); font-weight: 400; line-height: 1.05; }
+h1 { font-size: 92px; }
+h2 { font-size: 54px; border-bottom: 3px solid var(--gold); padding-bottom: 6px; margin-bottom: 26px; }
+h3 { font-size: 34px; margin-bottom: 8px; }
+h4 { font-size: 26px; margin-bottom: 6px; }
+p { font-size: 24px; line-height: 1.42; margin-bottom: 14px; }
+p.small, .small p, .small li { font-size: 21px; }
+strong { color: #3b120a; }
+.dropcap::first-letter {
+  float: left; font-family: "IM Fell English SC", serif; color: var(--header);
+  font-size: 92px; line-height: .8; padding: 8px 10px 0 0;
+}
+
+/* Kästen */
+.note {
+  background: var(--note);
+  border-top: 4px double #8c7a4b; border-bottom: 4px double #8c7a4b;
+  box-shadow: 0 4px 14px rgba(0,0,0,.25);
+  padding: 22px 30px; margin-bottom: 20px;
+}
+.note h4 { color: #2c2a1e; }
+.desc {
+  background: var(--desc);
+  border: 3px solid #b89c62; outline: 1px solid #b89c62; outline-offset: 4px;
+  box-shadow: 0 3px 12px rgba(0,0,0,.2);
+  padding: 22px 30px; margin: 6px 6px 24px;
+}
+.desc h4 { margin-bottom: 0; }
+.desc .by { font-family: "IM Fell English", serif; font-style: italic; font-size: 20px; color: #6b5536; margin-bottom: 10px; }
+.desc p { font-style: italic; font-size: 22px; line-height: 1.4; }
+
+/* Layouts */
+.split { display: grid; grid-template-columns: 40% 1fr; gap: 54px; height: 100%; }
+.split.rev { grid-template-columns: 1fr 40%; }
+.split.half { grid-template-columns: 1fr 1fr; }
+.pic {
+  height: 100%; border: 3px solid #3b2a1a; box-shadow: 0 6px 22px rgba(0,0,0,.45);
+  background-size: cover; background-position: center;
+}
+.col { display: flex; flex-direction: column; min-height: 0; }
+.two-col { column-count: 2; column-gap: 56px; }
+.two-col > * { break-inside: avoid; }
+
+.cutout {
+  height: 100%; background-repeat: no-repeat; background-size: contain; background-position: center;
+  filter: drop-shadow(0 10px 18px rgba(60,35,15,.45));
+}
+.hero { display: grid; grid-template-columns: 1fr 46%; gap: 40px; height: 100%; align-items: center; }
+
+/* Dunkle Vollbild-Folien */
+.slide.dark { color: #f3ead3; padding: 0; }
+.slide.dark .bg { position: absolute; inset: 0; background-size: cover; background-position: center; }
+.slide.dark .bg::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(15,10,8,.88) 0%, rgba(15,10,8,.55) 50%, rgba(15,10,8,.15) 100%); }
+.slide.dark .inner { position: relative; height: 100%; padding: 90px 110px; display: flex; flex-direction: column; justify-content: center; }
+.slide.dark h1, .slide.dark h2, .slide.dark h3 { color: #f0d9a0; border-color: var(--blood); }
+.slide.dark p { color: #eadfc4; }
+.kicker { font-family: "IM Fell English SC", serif; font-size: 30px; color: var(--gold); letter-spacing: 3px; margin-bottom: 14px; }
+.quote { font-family: "IM Fell English", serif; font-style: italic; font-size: 64px; line-height: 1.15; max-width: 900px; }
+.quote-by { font-family: "IM Fell English SC", serif; font-size: 30px; color: var(--gold); margin-top: 22px; }
+
+/* Tabellen */
+table { width: 100%; border-collapse: collapse; font-size: 22px; line-height: 1.32; }
+th { font-family: "IM Fell English SC", serif; color: var(--header); font-size: 26px; font-weight: 400; text-align: left; padding: 8px 14px; border-bottom: 2px solid var(--gold); }
+td { padding: 9px 14px; vertical-align: top; }
+tbody tr:nth-child(odd) { background: var(--note); }
+td:first-child { width: 36%; }
+
+/* Definitionen und Karten */
+dl { font-size: 22px; line-height: 1.38; }
+dt { font-weight: 600; color: #3b120a; display: inline; }
+dt::after { content: " — "; color: var(--header); }
+dd { display: inline; }
+dl > div { margin-bottom: 14px; break-inside: avoid; }
+.cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; }
+.cards .note { margin: 0; height: 100%; }
+.cards .note p { font-size: 21px; }
+.icon { font-size: 40px; color: var(--header); margin-bottom: 6px; display: block; }
+ul.runes { list-style: none; }
+ul.runes li { font-size: 23px; line-height: 1.4; margin-bottom: 14px; padding-left: 34px; position: relative; }
+ul.runes li::before { content: "✦"; position: absolute; left: 0; top: 1px; color: var(--header); }
+
+/* Fußzeile wie Homebrewery-Footnote */
+.foot {
+  position: absolute; left: 90px; right: 90px; bottom: 26px;
+  display: flex; justify-content: space-between; align-items: center;
+  font-family: "IM Fell English SC", serif; font-size: 20px; color: #8c7a4b; letter-spacing: 1px;
+}
+.slide.dark .foot { color: rgba(240,217,160,.6); }
+
+/* ---------- Animationen ---------- */
+.pic, .bg { overflow: hidden; }
+.pic { position: relative; }
+.layer { position: absolute; inset: 0; background-size: cover; background-repeat: no-repeat; will-change: transform; }
+/* Ken-Burns-Bewegung, startet bei jedem Betreten der Folie neu */
+.slide.active .kb-in > .layer    { animation: kb-in 22s ease-out forwards; }
+.slide.active .kb-out > .layer   { animation: kb-out 22s ease-out forwards; }
+.slide.active .kb-left > .layer  { animation: kb-left 24s ease-in-out forwards; }
+.slide.active .kb-right > .layer { animation: kb-right 24s ease-in-out forwards; }
+.slide.active .kb-up > .layer    { animation: kb-up 24s ease-out forwards; }
+.slide.active .kb-face > .layer  { transform-origin: 50% 13%; animation: kb-in 18s ease-out forwards; }
+@keyframes kb-in    { from { transform: scale(1.02); } to { transform: scale(1.16); } }
+@keyframes kb-out   { from { transform: scale(1.18); } to { transform: scale(1.03); } }
+@keyframes kb-left  { from { transform: scale(1.14) translateX(3%); } to { transform: scale(1.14) translateX(-3%); } }
+@keyframes kb-right { from { transform: scale(1.14) translateX(-3%); } to { transform: scale(1.14) translateX(3%); } }
+@keyframes kb-up    { from { transform: scale(1.14) translateY(3%); } to { transform: scale(1.14) translateY(-3%); } }
+/* Abdunklung liegt in der Bildebene, damit Glut und Augen darüber leuchten */
+.slide.dark .bg::after { display: none; }
+.slide.dark .bg > .layer::before { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(15,10,8,.88) 0%, rgba(15,10,8,.55) 50%, rgba(15,10,8,.15) 100%); }
+.slide.dark .inner { z-index: 3; }
+
+/* Freigestellte Figuren: Auftritt, danach leichtes Atmen */
+.slide.active .enter-right { animation: enter-right 1.4s cubic-bezier(.2,.7,.2,1) both, sway 7s ease-in-out 1.4s infinite; }
+.slide.active .prowl       { animation: prowl 1.8s cubic-bezier(.2,.7,.2,1) both, sway 6s ease-in-out 1.8s infinite; }
+.slide.active .rise        { animation: rise 1.3s cubic-bezier(.2,.7,.2,1) both, sway 7s ease-in-out 1.3s infinite; }
+.slide.active .night       { animation: night 3s ease-out both, breathe 4.5s ease-in-out 3s infinite; }
+@keyframes enter-right { from { opacity: 0; transform: translateX(80px); } to { opacity: 1; transform: none; } }
+@keyframes prowl { 0% { opacity: 0; transform: translateX(140px); } 70% { opacity: 1; transform: translateX(-8px); } 100% { transform: none; } }
+@keyframes rise  { from { opacity: 0; transform: translateY(60px); } to { opacity: 1; transform: none; } }
+@keyframes night { from { opacity: 0; filter: brightness(.2) drop-shadow(0 10px 18px rgba(60,35,15,0)); } to { opacity: 1; filter: brightness(1) drop-shadow(0 10px 18px rgba(60,35,15,.45)); } }
+@keyframes sway  { 0%,100% { transform: none; } 50% { transform: translateY(-6px) rotate(.4deg); } }
+@keyframes breathe { 0%,100% { transform: none; } 50% { transform: scale(1.012, 1.02); } }
+.night, .breathe { transform-origin: 50% 90%; }
+
+/* Text kommt nach dem Bild */
+.slide.active .col > *, .slide.active > h2, .slide.active > table, .slide.active > dl,
+.slide.active > .cards, .slide.active > .note, .slide.active .hero > div:first-child, .slide.active .inner > * {
+  animation: fade-up .8s ease-out both;
+}
+.slide.active .col > *:nth-child(2), .slide.active .inner > *:nth-child(2) { animation-delay: .25s; }
+.slide.active .col > *:nth-child(3), .slide.active .inner > *:nth-child(3), .slide.active > table, .slide.active > dl, .slide.active > .cards { animation-delay: .45s; }
+.slide.active .col > *:nth-child(n+4) { animation-delay: .65s; }
+@keyframes fade-up { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+
+/* Effekt-Ebenen: Schnee, Glut, Nebel, Staub, Zorn, Auge */
+.fx { position: absolute; inset: 0; pointer-events: none; z-index: 2; overflow: hidden; }
+.fx i { position: absolute; display: block; border-radius: 50%; opacity: 0; }
+.slide.active .fx.snow i   { background: #fff; animation: snow linear infinite; }
+.slide.active .fx.embers i { background: #ffb347; box-shadow: 0 0 6px 2px rgba(255,120,30,.8); animation: ember ease-out infinite; }
+.slide.active .fx.dust i   { background: rgba(230,200,150,.8); animation: dust linear infinite; }
+@keyframes snow  { 0% { opacity: 0; transform: translate(0,-20px); } 10% { opacity: .9; } 100% { opacity: .7; transform: translate(var(--dx), 110%); top: 105%; } }
+@keyframes ember { 0% { opacity: 0; transform: translate(0,0) scale(1); } 15% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--dx), -420px) scale(.3); } }
+@keyframes dust  { 0% { opacity: 0; transform: translateX(0); } 20% { opacity: .6; } 100% { opacity: 0; transform: translateX(420px) translateY(var(--dx)); } }
+.fx.fog::before, .fx.fog::after {
+  content: ""; position: absolute; inset: -20% -50%;
+  background: radial-gradient(ellipse at 30% 60%, rgba(220,225,230,.28), transparent 55%),
+              radial-gradient(ellipse at 75% 40%, rgba(220,225,230,.22), transparent 50%);
+}
+.slide.active .fx.fog::before { animation: fog 26s linear infinite; }
+.slide.active .fx.fog::after  { animation: fog 38s linear infinite reverse; opacity: .7; }
+@keyframes fog { from { transform: translateX(-12%); } to { transform: translateX(12%); } }
+.fx.rage { background: radial-gradient(circle at 50% 50%, transparent 45%, rgba(140,20,10,.55) 100%); }
+.slide.active .fx.rage { animation: rage 2.6s ease-in-out infinite; }
+@keyframes rage { 0%,100% { opacity: .25; } 50% { opacity: .9; } }
+.fx.eye::before {
+  content: ""; position: absolute; left: 50%; top: 13%; width: 150px; height: 56px; transform: translate(-50%,-50%);
+  background: radial-gradient(ellipse, rgba(255,40,20,.6), transparent 70%); mix-blend-mode: screen;
+}
+.slide.active .fx.eye::before { animation: eye 3.2s ease-in-out infinite; }
+@keyframes eye { 0%,100% { opacity: .15; } 50% { opacity: .85; } }
+
+/* Folie „Wie andere sie sehen“: die Köpfe am Speer baumeln */
+.pic.hang-pic { height: auto; aspect-ratio: 786 / 943; align-self: center; }
+.pic.hang-pic, .pic.hang-pic > .layer { background-size: 100% 100%; background-position: 0 0; }
+.heads {
+  position: absolute; left: 63%; top: 24%; width: 19%; height: 22%; z-index: 1;
+  background-image: url('images/Orkin5.jpg');
+  background-size: 526.3% 454.5%; background-position: 77.78% 30.77%;
+  transform-origin: 50% 3%;
+  -webkit-mask-image: radial-gradient(ellipse 58% 60% at 50% 48%, #000 62%, transparent 100%);
+          mask-image: radial-gradient(ellipse 58% 60% at 50% 48%, #000 62%, transparent 100%);
+}
+.slide.active .heads { animation: dangle 4.2s ease-in-out infinite; }
+@keyframes dangle {
+  0%   { transform: rotate(0deg); }
+  14%  { transform: rotate(5deg); }
+  32%  { transform: rotate(-4deg); }
+  50%  { transform: rotate(2.6deg); }
+  66%  { transform: rotate(-1.6deg); }
+  82%  { transform: rotate(.8deg); }
+  100% { transform: rotate(0deg); }
+}
+
+/* ---------- Inhaltliche Effekte an Bildstellen ---------- */
+.spot { position: absolute; transform: translate(-50%, -50%); pointer-events: none; z-index: 1; border-radius: 50%; }
+.spot.fire { background: radial-gradient(circle, rgba(255,200,110,.8), rgba(255,110,20,.4) 38%, transparent 70%); mix-blend-mode: screen; }
+.slide.active .spot.fire { animation: flicker var(--d, 1.4s) ease-in-out infinite alternate; }
+@keyframes flicker { 0% { opacity: .55; transform: translate(-50%,-50%) scale(.92); } 30% { opacity: .95; } 55% { opacity: .65; transform: translate(-50%,-52%) scale(1.06); } 80% { opacity: 1; } 100% { opacity: .7; transform: translate(-50%,-50%) scale(.98); } }
+.spot.eyes { background: radial-gradient(ellipse 50% 32% at 50% 50%, var(--c), transparent 75%); mix-blend-mode: screen; height: auto !important; aspect-ratio: 2.4 / 1; }
+.slide.active .spot.eyes { animation: eye-pulse 3.4s ease-in-out infinite; }
+@keyframes eye-pulse { 0%, 100% { opacity: .15; } 45%, 60% { opacity: .95; } 52% { opacity: .1; } }
+.spot.sun { background: radial-gradient(circle, rgba(255,210,130,.55), rgba(255,140,40,.2) 40%, transparent 70%); mix-blend-mode: screen; }
+.slide.active .spot.sun { animation: sun 7s ease-in-out infinite; }
+@keyframes sun { 0%, 100% { opacity: .5; transform: translate(-50%,-50%) scale(.95); } 50% { opacity: 1; transform: translate(-50%,-50%) scale(1.08); } }
+.spot.glint { border-radius: 0; opacity: 0; }
+.spot.glint::before, .spot.glint::after { content: ""; position: absolute; left: 50%; top: 50%; background: radial-gradient(ellipse, #fff, rgba(255,255,255,0) 70%); transform: translate(-50%,-50%); }
+.spot.glint::before { width: 100%; height: 6%; }
+.spot.glint::after  { width: 6%; height: 100%; }
+.slide.active .spot.glint { animation: glint 5.5s ease-in-out infinite; animation-delay: var(--delay, 1.5s); }
+@keyframes glint { 0%, 78%, 100% { opacity: 0; transform: translate(-50%,-50%) scale(.2) rotate(0); } 86% { opacity: 1; transform: translate(-50%,-50%) scale(1) rotate(45deg); } 94% { opacity: 0; transform: translate(-50%,-50%) scale(.4) rotate(90deg); } }
+.spot.drip { width: 7px !important; height: 10px !important; background: #8f0d06; border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%; box-shadow: inset -1px -2px 2px rgba(0,0,0,.4); opacity: 0; transform: translate(-50%, 0); }
+.slide.active .spot.drip { animation: drip var(--d, 3.6s) ease-in infinite; animation-delay: var(--delay, 0s); }
+@keyframes drip { 0% { opacity: 0; transform: translate(-50%,0) scale(.2); } 15% { opacity: 1; } 55% { opacity: 1; transform: translate(-50%,0) scale(1); } 100% { opacity: 0; transform: translate(-50%, var(--fall, 60px)) scale(.8, 1.3); } }
+.spot.breath { background: radial-gradient(circle, rgba(255,255,255,.75), rgba(255,255,255,0) 68%); filter: blur(4px); opacity: 0; }
+.slide.active .spot.breath { animation: breath 4.2s ease-out infinite; animation-delay: var(--delay, .8s); }
+@keyframes breath { 0% { opacity: 0; transform: translate(-50%,-50%) scale(.3); } 25% { opacity: .7; } 100% { opacity: 0; transform: translate(calc(-50% + var(--bx)), calc(-50% + var(--by))) scale(1.9); } }
+.spot.rays, .spot.falls { transform: none; border-radius: 0; }
+.spot.rays { background: repeating-linear-gradient(105deg, transparent 0 34px, rgba(255,250,200,.16) 52px, transparent 78px); background-size: 300% 100%; mix-blend-mode: screen;
+  -webkit-mask-image: linear-gradient(180deg, #000, transparent); mask-image: linear-gradient(180deg, #000, transparent); }
+.slide.active .spot.rays { animation: rays 9s ease-in-out infinite alternate; }
+@keyframes rays { from { background-position: 0 0; opacity: .5; } to { background-position: 100% 0; opacity: 1; } }
+.spot.falls { background: repeating-linear-gradient(180deg, transparent 0 6px, rgba(255,255,255,.45) 10px, transparent 16px); background-size: 100% 48px; mix-blend-mode: screen; opacity: .55;
+  -webkit-mask-image: radial-gradient(ellipse 50% 50%, #000 40%, transparent 100%); mask-image: radial-gradient(ellipse 50% 50%, #000 40%, transparent 100%); }
+.slide.active .spot.falls { animation: falls .7s linear infinite; }
+@keyframes falls { to { background-position: 0 48px; } }
+.spot.raven { transform: none; border-radius: 0; opacity: 0; }
+.spot.raven svg { width: 100%; height: auto; display: block; transform-origin: 50% 55%; }
+.slide.active .spot.raven { animation: fly 15s linear infinite; animation-delay: 2s; }
+.slide.active .spot.raven svg { animation: flap .42s ease-in-out infinite alternate; }
+@keyframes fly { 0% { left: -8%; opacity: 0; transform: translateY(0); } 6% { opacity: 1; } 30% { transform: translateY(-30px); } 60% { transform: translateY(12px); } 94% { opacity: 1; } 100% { left: 108%; opacity: 0; transform: translateY(-20px); } }
+@keyframes flap { from { transform: scaleY(1); } to { transform: scaleY(-.35); } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* Fortschritt und Hinweise */
+#progress { position: fixed; left: 0; bottom: 0; height: 4px; background: var(--blood); transition: width .4s; z-index: 5; }
+#hint {
+  position: fixed; right: 18px; bottom: 14px; z-index: 5;
+  font: 14px "EB Garamond", serif; color: rgba(240,217,160,.55);
+}
+@media (max-width: 700px) { #hint { display: none; } }
+</style>
+</head>
+<body>
+<div id="stage">
+
+<!-- 1 Titel -->
+<section class="slide" data-foot="Ein Experiment">
+  <div class="hero">
+    <div>
+      <div class="kicker" style="color:#8c7a4b">Ein Experiment</div>
+      <h1 style="font-size:120px; border-bottom:3px solid var(--gold); padding-bottom:10px">Shagra Morakai</h1>
+      <p style="font-size:30px; margin-top:24px">Eine Orkin, die niemandem gehört.<br>Wie die Welt durch ihre Augen aussieht.</p>
+    </div>
+    <div class="cutout enter-right sway" data-spots="drip:80,33,70;drip:83.5,35,60;glint:93,19,70;eyes:14,47,26,y" style="background-image:url('images/ork-vorgeschichte2.png')"></div>
+  </div>
+</section>
+
+<!-- 2 Brief I -->
+<section class="slide" data-foot="Ein Experiment">
+  <div class="split rev">
+    <div class="col">
+      <h2>Lieber Azura,</h2>
+      <div class="note">
+        <p class="dropcap">ich habe nach den letzten Abenden viel darüber nachgedacht, wie unterschiedlich man dieselbe Szene erleben kann. Wir sitzen am selben virtuellen Tisch, aber jeder baut sich im Kopf seine eigene Wirklichkeit daraus. Das finde ich spannend, und ich würde gern mit dir ausprobieren, was passiert, wenn wir die Perspektive einmal wechseln.</p>
+        <p>Deshalb möchte ich dir ein kleines Experiment vorschlagen: Wir tauschen für ein, zwei Stunden die Rollen. Ich bin SL, und du spielst Shagra. So kann ich sehen, wie du Shagra spielen würdest und wie es sich anfühlt, eine Szene zu leiten. Und du bekommst einen Eindruck davon, wie mein Kopf die Welt um Shagra herum aufbaut. Ich glaube, wir können beide etwas davon mitnehmen.</p>
+      </div>
+    </div>
+    <div class="cutout prowl" data-spots="glint:95,8,70;eyes:15,44,26,y" style="background-image:url('images/ork-cat2.png')"></div>
+  </div>
+</section>
+
+<!-- 3 Brief II -->
+<section class="slide" data-foot="Ein Experiment">
+  <h2>Was dich erwartet</h2>
+  <div class="note" style="max-width:1180px">
+    <p>Damit du leichter in die Figur findest, habe ich diesen Text geschrieben. In <strong>Teil 1</strong> geht es um die Orks: woher sie kommen, woran sie glauben und wie sie leben. Die kurzen Geschichten sollen die Lore spürbar machen. In <strong>Teil 2</strong> geht es um Shagra selbst und darum, was davon in ihr steckt. Am Ende steht eine kleine Geschichte aus ihrer Sicht.</p>
+    <p>Lies es gern in Ruhe, ganz ohne Druck. Ich bin gespannt, was du aus Shagra machst.</p>
+    <p>Und bitte versteh das Ganze als Experiment, nicht als fertigen Plan. Vielleicht klappt nicht alles auf Anhieb, und das ist völlig in Ordnung. Ich gebe mir gern Mühe, dass wir uns gegenseitig besser verstehen, nicht nur für diesen einen Abend, sondern auf Dauer. Mir geht es darum, gemeinsam herauszufinden, was die Welt und das Rollenspiel für jeden von uns ausmacht.</p>
+  </div>
+</section>
+
+<!-- 4 Teil 1 -->
+<section class="slide dark" data-foot="Die Orks">
+  <div class="bg kb-in" data-fx="embers" data-spots="fire:27,80,160;fire:42,76,120;fire:9,82,110;fire:20,85,90" style="background-image:url('ork-bilder/20-ork-schlacht.jpg')"></div>
+  <div class="inner">
+    <div class="kicker">Teil 1</div>
+    <h1>Die Orks</h1>
+    <p style="font-size:28px; max-width:720px; margin-top:20px">Woher sie kommen, woran sie glauben und wie sie leben, erzählt von denen, die ihnen begegnet sind.</p>
+  </div>
+</section>
+
+<!-- 5 §1 -->
+<section class="slide" data-foot="Wie die Welt die Orks sieht">
+  <div class="split">
+    <div class="pic kb-in" data-fx="fog" data-spots="eyes:50.5,32,30,g" style="background-image:url('ork-bilder/13-ork-dunkler-wald.jpg')"></div>
+    <div class="col">
+      <h2>1. Wie die Welt die Orks sieht</h2>
+      <div class="desc">
+        <h4>Die Glocke von Hagenfurt</h4>
+        <div class="by">erzählt von Mira, einer Bäuerin</div>
+        <p>Ich war sieben, als nachts die Glocke läutete und jemand „Grünhäute!“ schrie. Mutter riss mich aus dem Bett, ihre Hand zitterte so sehr, dass sie mir fast den Arm ausrenkte. Vom Waldrand aus sah ich unser Haus brennen. Ein Schatten, größer als jeder Mann, drehte sich zu uns um. Ich hielt mir selbst den Mund zu, damit ich nicht schrie, und spürte, wie warm mir das Bein hinunterlief. Heute bin ich alt. Und wenn nachts eine Glocke läutet, zittern meine Hände noch genauso wie damals die meiner Mutter.</p>
+      </div>
+      <p class="small">Für die meisten Menschen, Elfen und Zwerge sind Orks Räuber und Wilde, fast eine Naturgewalt. Kleine Stämme überfallen Dörfer, große Horden bedrohen ganze Städte. Für Menschen sind Orks blutrünstig und dumm, mit ihnen könne man nicht verhandeln.</p>
+      <p class="small">Orks sind etwa zwei Meter groß, breit gebaut, mit langen Armen, grauer bis grünlicher Haut und Hauern wie ein Wildschwein. Im Kampf setzen sie ihre Kraft mit Wildheit und Wut ein.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 6 §2 -->
+<section class="slide" data-foot="Gruumsh">
+  <div class="split rev">
+    <div class="col">
+      <h2>2. Gruumsh und der Betrug der Götter</h2>
+      <div class="desc">
+        <h4>Am Feuer</h4>
+        <div class="by">erzählt von Ghazra, einer alten Luthic-Priesterin, zu den Kindern ihres Stammes</div>
+        <p>„Ihr friert, weil wir kein Haus haben? Gut. Dann hört, wem ihr das verdankt.“ Die Kinder rückten näher ans Feuer, und Ghazras Stimme wurde hart. „Die Götter teilten die Welt mit Losen. Corellon lächelte und gab jedem ein Los. Wälder für die Elfen, Berge für die Zwerge, Felder für die Menschen. Als Gruumsh zog, war nichts mehr übrig. Sie hatten uns betrogen.“ Ein Junge ballte die Fäuste, so wütend, dass ihm Tränen in den Augen standen. Ghazra nickte zufrieden. „Gruumsh hat nicht geweint. Er hob die Faust: ‚Dann nehmen wir es uns.‘ Spürt ihr diese Wut? Behaltet sie. Niemand schenkt uns etwas. Niemals.“</p>
+      </div>
+      <p class="small">Alles, was Orks ausmacht, führt auf ihren Schöpfer zurück: <strong>Gruumsh, den Einäugigen</strong>, einen grausamen Kriegsgott und erbitterten Feind Corellons, des Gottes der Elfen. Die Elfen sagen, Corellon habe ihm ein Auge ausgestochen. Die Orks sagen, Gruumsh habe schon immer nur eines gehabt.</p>
+    </div>
+    <div class="pic kb-right" data-fx="embers" data-spots="fire:73,50,260;fire:22,72,60;fire:86,66,40;fire:76,85,40" style="background-image:url('ork-bilder/16-ork-dorf-feuer.jpg')"></div>
+  </div>
+</section>
+
+<!-- 7 Gruumshs Auftrag -->
+<section class="slide dark" data-foot="Gruumsh">
+  <div class="bg kb-face" data-spots="eyes:50,13,120,r" style="background-image:url('ork-bilder/05-ork-haeuptling-thron.jpg'); background-position: 70% 30%;"></div>
+  <div class="inner">
+    <div class="kicker">Gruumshs Auftrag an sein Volk</div>
+    <div class="quote">„Vermehrt euch, werdet stark und nehmt euch, was euch zusteht.“</div>
+    <p style="max-width:780px; margin-top:34px">Als die Götter das Land verlosten, fälschten sie die Lose, und für die Orks blieb keine Heimat. Gruumsh erklärte ihnen den ewigen Krieg.</p>
+  </div>
+</section>
+
+<!-- 8 §3 -->
+<section class="slide" data-foot="Die Götter und die Furcht">
+  <div class="split">
+    <div class="pic kb-out" data-fx="embers" data-spots="sun:30,40,420;raven:0,18,46" style="background-image:url('ork-bilder/19-alter-ork-sonnenuntergang.jpg')"></div>
+    <div class="col">
+      <h2>3. Die Götter und die Furcht</h2>
+      <div class="desc">
+        <h4>Der einäugige Rabe</h4>
+        <div class="by">erzählt von Brannoc Eisenhand, einem zwergischen Grenzwächter</div>
+        <p>Drei Tage hatten wir die Orkbande verfolgt, und ich hatte Angst wie nie zuvor: zwanzig von ihnen, und wir nur acht. Am vierten Morgen landete ein Rabe vor ihrem Lager, dem ein Auge fehlte. Die ganze Bande erstarrte. Ihr Anführer, ein Riese mit Narben im Gesicht, fiel auf die Knie und zitterte wie ein Kind. Er schnitt sich in den Arm und ließ Blut in den Staub tropfen. Dann zogen sie ab und ließen ihre Beute liegen. Mein Hauptmann lachte. Mir war nicht nach Lachen. Wer so viel Angst vor seinen Göttern hat, der ist zu allem fähig, wenn diese Götter es verlangen.</p>
+      </div>
+      <p class="small">Orks sind tief religiös. Sie verehren ihre Götter und fürchten sie zugleich, denn das ganze Pantheon ist grausam. Überall sehen sie Omen und Vorzeichen, und jeder Stamm hält unzählige Rituale und Tabus ein, um den Zorn der Götter abzuwenden.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 9 Pantheon -->
+<section class="slide" data-foot="Das Pantheon">
+  <h2>Das Pantheon der Orks</h2>
+  <table>
+    <thead><tr><th>Gottheit</th><th>Rolle</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Gruumsh</strong>, der Einäugige</td><td>Schöpfer und Herr der Orks, Gott des Krieges und der Eroberung</td></tr>
+      <tr><td><strong>Luthic</strong>, die große Mutter</td><td>Gruumshs Frau, Göttin von Leben und Fruchtbarkeit. Ihr Kult zieht alle Kinder auf, deutet die Omen und hält den Stamm zusammen.</td></tr>
+      <tr><td><strong>Ilneval</strong>, der Kriegstreiber</td><td>Gruumshs rechte Hand; Strategie und geplante Angriffe</td></tr>
+      <tr><td><strong>Bahgtru</strong>, der Beinbrecher</td><td>Rohe Brutalität und wildes Blutvergießen in der Schlacht</td></tr>
+      <tr><td><strong>Yurtrus</strong></td><td>Krankheit und Tod. Seine Priester bestatten die Toten und tragen Seuchen zu den Feinden.</td></tr>
+      <tr><td><strong>Shargaas</strong></td><td>Dunkelheit und das Unbekannte. Selbst unter Orks gefürchtet: Seine Anhänger gelten als ehrlos und bilden Kulte von Meuchlern und Saboteuren.</td></tr>
+    </tbody>
+  </table>
+  <p style="margin-top:24px">Wer für Gruumsh viel kämpft und erobert, darf nach dem Tod an seiner ewigen Schlacht teilnehmen.</p>
+</section>
+
+<!-- 10 §4 -->
+<section class="slide" data-foot="Aufwachsen">
+  <div class="split rev">
+    <div class="col">
+      <h2>4. Aufwachsen: ein kurzes, hartes Leben</h2>
+      <div class="desc">
+        <h4>Der leere Schlafplatz</h4>
+        <div class="by">erinnert von Durg, einem Ork-Krieger</div>
+        <p>Wir schliefen zu acht unter einem Fell. Nurk war der Kleinste, er lag immer an meinem Rücken und wärmte mich. Er hustete im Winter und war langsam bei der Jagd. Eines Morgens war sein Platz leer und kalt. Ich fragte die Priesterin, wo Nurk sei. Sie schlug mich so hart, dass ich Blut spuckte. „Es gab nie einen Nurk.“ In dieser Nacht biss ich ins Fell, damit niemand mich weinen hörte. Seitdem renne ich bei jeder Jagd vorne, bis meine Lunge brennt. Nicht aus Mut, sondern aus Angst, dass eines Morgens mein Platz kalt ist.</p>
+      </div>
+      <p class="small">Jeder Ork kommt als eines von vielen Kindern zur Welt und wird dem <strong>Kult Luthics</strong> übergeben. Orks sind <strong>mit 12 Jahren erwachsen</strong>, nur wenige werden <strong>älter als 25</strong>, und wer 40 erreicht, gilt als uralt.</p>
+      <p class="small"><strong>Schwäche wird verabscheut.</strong> Wer schwach ist, überlebt nur im Kult Luthics oder Yurtrus'. Alle anderen werden verstoßen oder getötet, nicht selten schon als Kinder. Darüber zu sprechen ist Tabu.</p>
+    </div>
+    <div class="pic kb-up" data-fx="snow" data-spots="breath:51,25,70,u" style="background-image:url('ork-bilder/07-bergork-schnee.jpg')"></div>
+  </div>
+</section>
+
+<!-- 11 §5 -->
+<section class="slide" data-foot="Stamm und Stärke">
+  <div class="split">
+    <div class="pic kb-in" data-fx="fog" data-spots="eyes:53,8,40,r" style="background-image:url('ork-bilder/09-orog-hoehle.jpg')"></div>
+    <div class="col">
+      <h2>5. Das Recht des Stärkeren</h2>
+      <div class="desc">
+        <h4>Das Kriegsfeuer</h4>
+        <div class="by">erzählt von Aelrindel, einem elfischen Späher</div>
+        <p>Vier Nächte lag ich über ihrem Lager und fühlte mich überlegen, ein Elf unter Tieren. Dann sah ich, wie ein junger Ork einem alten das Fleisch aus der Hand riss. Der Alte schlug ihn nieder. Am nächsten Abend versuchte es der Junge wieder, mit geschwollenem Auge und zitternden Knien, und diesmal lag der Alte im Staub. Der Junge setzte sich ans Feuer, und alle rückten für ihn zur Seite. Der Alte saß allein im Dunkeln, und niemand sah ihn mehr an. Mir wurde kalt. Bei uns dauert ein Machtwechsel Jahrhunderte. Bei ihnen dauert er einen Faustschlag, und wer fällt, ist vergessen.</p>
+      </div>
+      <p class="small">Die wilden Stämme folgen dem <strong>Recht des Stärkeren</strong>. Wer stärker ist, darf sich nehmen, was er will, und gibt die Befehle. Gerissenheit oder Magie verschaffen auch Einfluss, gelten aber als weniger ehrenhaft.</p>
+      <p class="small">Ein Stamm umfasst meist nur ein paar Hundert Orks. Für große Raubzüge schließen sich Stämme zu einer <strong>Horde</strong> zusammen. Fällt ihr Anführer, zerfällt sie so schnell, wie sie entstanden ist.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 12 §6 -->
+<section class="slide" data-foot="Frauen bei den Orks">
+  <div class="split rev">
+    <div class="col">
+      <h2>6. Frauen bei den Orks</h2>
+      <div class="desc">
+        <h4>Die Warnung</h4>
+        <div class="by">erzählt von Hauptmann Elsa Varn, Stadtwache von Leilon</div>
+        <p>Drei Orkfrauen standen am Tor, barfuß und blutig, eine presste ein Kind an sich. Ich hatte Angst, und ich hasste sie dafür. Ich ließ sie in Ketten legen. In der Nacht fragte ich die Älteste, warum sie ihr eigenes Volk verrieten. Sie zog ihren Kragen herunter. Brandmale, eines neben dem anderen, eines für jeden Mann, dem sie gehört hatte. Ihre Stimme blieb ruhig, aber ihre Hände ballten sich, bis die Knöchel weiß wurden. „Nicht Volk verraten. Eigentümer verraten.“ Ich schämte mich für die Ketten. Zehn Tage später kam die Horde, und wir waren bereit. Das verdanken wir drei Frauen, die niemandem mehr gehören wollten.</p>
+      </div>
+      <p class="small">Die wilden Stämme sind <strong>stark patriarchalisch</strong>. Frauen haben praktisch keine Rechte und gelten im besten Fall als wertvoller Besitz. Die <strong>Größe des Harems</strong> zeigt den Rang eines Kriegers, und Luthic verlangt von den Frauen vor allem Kinder.</p>
+      <p class="small">Gerade deshalb können Orkfrauen zur Brücke werden: Man erzählt sich von Orkinnen, die aus dem Harem fliehen und andere Völker vor einer Horde warnen.</p>
+    </div>
+    <div class="pic kb-left" data-spots="eyes:73,49,34,r" style="background-image:url('ork-bilder/15-orkin-schaedel-schulter.jpg'); background-position: 60% center;"></div>
+  </div>
+</section>
+
+<!-- 13 §7 -->
+<section class="slide" data-foot="Zugehörigkeit und Ehre">
+  <div class="split">
+    <div class="pic kb-right" style="background-image:url('ork-bilder/17-ork-stadt-many-arrows.jpg')"></div>
+    <div class="col">
+      <h2>7. Die andere Seite</h2>
+      <div class="desc">
+        <h4>Der Handschlag</h4>
+        <div class="by">erzählt von Hulda Steinbrecher, einer zwergischen Händlerin</div>
+        <p>Als ich das Zelt bei Many Arrows betrat, hatte ich die Hand am Beil und das Herz im Hals. Mein Großvater war von Orks erschlagen worden. Mir gegenüber saß eine Orkin, laut und breit, die über meinen Bart lachte. Ich wurde wütend und schlug auf den Tisch. Sie grinste und schlug fester. Dann nannte sie einen Preis, fairer als jeder in Mithral-Halle. „Warum?“, fragte ich. „Du bist allein gekommen. Das ist stark.“ Zum Abschied packte sie meinen Unterarm. Auf dem Heimweg weinte ich, und ich weiß bis heute nicht genau, ob um meinen Großvater oder weil ich mich so lange geirrt hatte.</p>
+      </div>
+      <p class="small">Orks sind <strong>nicht von Natur aus böse</strong>. Grausam machen sie der Einfluss ihrer Götter und die Kultur, die Gruumsh ihnen auferlegt hat. Das Orkreich <strong>Many Arrows</strong> zeigt es: Häuptling Obould einte über 40.000 Orks und gründete ein Reich, mit dem man Frieden schließen und handeln kann.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 14 Freiheit -->
+<section class="slide" data-foot="Freiheit">
+  <div class="split rev">
+    <div class="col">
+      <h2>Zugehörigkeit, Ehre und Freiheit</h2>
+      <dl>
+        <div><dt>Zugehörigkeit</dt><dd>Heimat ist für Orks dort, wo ihr Stamm ist. Sie sind stolz darauf, sich gemeinsam dem Überlebenskampf zu stellen.</dd></div>
+        <div><dt>Entdeckerlust</dt><dd>Orks lieben es, die Welt zu erkunden und unbekannte Länder zu sehen.</dd></div>
+        <div><dt>Ehre</dt><dd>Orks haben ein ausgeprägtes Ehrgefühl und großen Respekt vor Stärke. Wer seine Kraft beweist, verdient sich ihren Respekt, und mit Orks kann man verhandeln.</dd></div>
+      </dl>
+      <div class="note" style="margin-top:14px">
+        <h4>Freiheit</h4>
+        <p class="small">Gruumshs Ruf kann sich auch als <strong>Sehnsucht nach Freiheit</strong> zeigen, als Wille, das eigene Leben genau so zu gestalten, wie man es will. „Nimm dir, was dir zusteht“ kann auch heißen: Nimm dir dein eigenes Leben. Für Orks, die die Brutalität ihrer Stämme hinter sich lassen, ist dieser Freiheitssinn mehr wert als jeder Rang am Kriegsfeuer, denn ein Krieger, der nur Befehle befolgt, ist auch nur Besitz seines Häuptlings.</p>
+      </div>
+    </div>
+    <div class="pic kb-out" data-fx="dust" style="background-image:url('ork-bilder/06-orkin-wueste-rot.jpg'); background-position: 30% center;"></div>
+  </div>
+</section>
+
+<!-- 15 §8 -->
+<section class="slide" data-foot="Halborks">
+  <div class="split">
+    <div class="pic kb-in" data-fx="fog" data-spots="rays:38,0,26,55" style="background-image:url('ork-bilder/11-ork-wald-axt.jpg')"></div>
+    <div class="col">
+      <h2>8. Halborks: zwischen zwei Welten</h2>
+      <div class="desc">
+        <h4>Hafenarbeit</h4>
+        <div class="by">erzählt von Tobin, einem Hafenarbeiter in Waterdeep</div>
+        <p>Einmal verschwand ein Sack Gewürze, und alle sahen sofort zu Grisk, auch ich. Er sagte nichts. Er stand nur da, die großen Hände offen, als wollte er zeigen, dass nichts darin ist. Am Ende war es der Neffe des Vorarbeiters. Entschuldigt hat sich niemand. Grisk hob einfach die nächste Kiste, aber ich sah, wie sein Kiefer mahlte. Abends am Kai sagte er leise: „Ich bin es gewohnt.“ Das tat mir mehr weh, als wenn er geschrien hätte. Seitdem sehe ich nicht mehr zuerst zu ihm.</p>
+      </div>
+      <p class="small">Halborks werden von beiden Seiten abgelehnt. Für Orks sind sie „verdorbenes Blut“ und werden oft verstoßen. Menschen sehen in ihnen halbe Monster und misstrauen ihnen, egal, was sie tun. Am besten geht es ihnen in großen Städten wie Waterdeep oder Baldur's Gate, wo sie in der Menge kaum auffallen.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 16 Teil 2 -->
+<section class="slide dark" data-foot="Shagra Morakai">
+  <div class="bg kb-in" data-fx="snow" data-spots="fire:16,23,130;fire:64,28,110" style="background-image:url('images/orkin-dorf.png'); background-position: 60% 30%;"></div>
+  <div class="inner">
+    <div class="kicker">Teil 2</div>
+    <h1>Shagra Morakai</h1>
+    <p style="font-size:28px; max-width:700px; margin-top:20px">Was von den Orks in ihr steckt und was sie hinter sich gelassen hat.</p>
+  </div>
+</section>
+
+<!-- 17 Herkunft I -->
+<section class="slide" data-foot="Herkunft">
+  <div class="split rev">
+    <div class="col">
+      <h2>Herkunft</h2>
+      <p class="small dropcap">Shagra kam als eines von vielen Kindern in einem nomadischen Stamm zur Welt, der durch die Wildnis zog und von Jagd und Raubzügen lebte. Wie jedes Orkkind wurde sie dem Kult Luthics übergeben. Dort hörte sie die Geschichten von Gruumsh, lernte die Götter zu fürchten, Omen zu lesen und dass nur Stärke zählt. Sie sah auch, wie schwache Geschwister eines Tages einfach nicht mehr da waren. Darüber sprach niemand.</p>
+      <p class="small">Mit zwölf galt Shagra als erwachsen, und ihr Weg schien vorgezeichnet: Sie sollte die Frau eines starken Kriegers werden, Teil seines Harems, Besitz, der Kinder für den Stamm gebiert. Aber Shagra hatte genau zugehört. Wenn Gruumshs Volk sich nichts schenken lässt und sich nimmt, was ihm zusteht, dann galt das auch für sie. Und was ihr zustand, war sie selbst.</p>
+      <p class="small">Als ein Krieger sie für sich beanspruchte, schlug sie ihn vor dem ganzen Stamm nieder. Für die Alten war das ein unerhörter Frevel. Manche flüsterten aber auch, Gruumsh selbst habe ihr die Wut geschenkt, und das sei ein Omen. Geduldet wurde sie danach nur, solange sie stärker war als jeder, der sie zurück an ihren Platz zwingen wollte. Kriegerin wurde sie nicht aus Ehrgeiz, sondern weil Kraft im Stamm das Einzige war, das ihre Freiheit schützte. Ihre Narben stammen aus diesen Jahren, ihre Zöpfe stehen für jede Prüfung, die sie bestand, und die Totenkopf-Zeichen für Beute, die sie dem Stamm brachte.</p>
+    </div>
+    <div class="cutout rise sway" data-spots="drip:88,26,70;drip:91.5,34,60;drip:69,41,50;glint:91,6,70" style="background-image:url('images/Orkin3.png')"></div>
+  </div>
+</section>
+
+<!-- 18 Herkunft II -->
+<section class="slide" data-foot="Herkunft">
+  <div class="split">
+    <div class="pic kb-left" data-fx="snow" data-spots="breath:37,63,80,r;glint:62,51,60" style="background-image:url('images/ork-vorgeschichte.png'); background-position: 30% center;"></div>
+    <div class="col">
+      <h2>Morak und der Ruf der Freiheit</h2>
+      <p>Auf einer Jagd fand sie Morak, ein verwaistes Großkatzenjunges, und zog es auf. Mit dem alten Jagdpfiff ihres Stammes ruft sie es bis heute. Morak ist das einzige Wesen, das ihr nie gehört hat und trotzdem immer bei ihr bleibt.</p>
+      <p>Irgendwann wurde ihr klar: Im Stamm würde sie immer eine geduldete Ausnahme bleiben, frei nur, solange sie kämpfte. Also folgte sie dem Ruf der Freiheit und ging mit Morak fort, um die Welt zu sehen, ihr Leben selbst zu bestimmen und ihrem eigenen Namen Ruhm zu verschaffen.</p>
+      <p>Für eine Orkin hat sie schon erstaunlich viele Winter überlebt. Ob sie ihrem Stamm eines Tages als Heldin gegenübertreten will, um zu beweisen, dass ihr Weg richtig war, würde sie selbst nie zugeben.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 19 Zitat -->
+<section class="slide dark" data-foot="Herkunft">
+  <div class="bg kb-in" data-fx="rage" data-spots="falls:80,22,10,30;drip:57,56,60;breath:75,63,80,r" style="background-image:url('images/ork-in-jaged.png'); background-position: 65% center;"></div>
+  <div class="inner">
+    <div class="quote">„Niemand besitzt mich.“</div>
+    <div class="quote-by">— Shagra Morakai</div>
+  </div>
+</section>
+
+<!-- 20 Eigenschaften -->
+<section class="slide" data-foot="Shagra spielen">
+  <h2>Drei Charaktereigenschaften</h2>
+  <div class="cards">
+    <div class="note">
+      <span class="icon">❖</span>
+      <h3>Freiheitsliebend und stolz</h3>
+      <p>Freiheit ist für Shagra das Höchste. Niemand besitzt sie, und niemand kommandiert sie herum oder redet sie klein, schon gar nicht, weil sie eine Frau ist. Sie entscheidet selbst, wem sie folgt und wofür sie kämpft. Wer andere wie Besitz behandelt, zieht ihren Zorn auf sich.</p>
+    </div>
+    <div class="note">
+      <span class="icon">❖</span>
+      <h3>Gesellig und neugierig</h3>
+      <p>Shagra kennt das starke Gemeinschaftsgefühl der Orks. Sie isst, trinkt und lacht gern mit anderen, erzählt laut von Jagden und Kämpfen und begrüßt Freunde nach Orkart, Unterarm an Unterarm. Die Welt außerhalb der Stämme fasziniert sie. Sie fragt nach, probiert aus und mischt sich ein.</p>
+    </div>
+    <div class="note">
+      <span class="icon">❖</span>
+      <h3>Ehrenhaft und loyal zum Rudel</h3>
+      <p>Hinterhalte und Meuchelei verachtet sie als „Shargaas-Art“, einen würdigen Gegner achtet sie. Wer mit ihr kämpft oder ihr Essen teilt, gehört zu ihrem Rudel, allen voran Morak. Für ihr Rudel steht sie ein, und sie hält es zurück, wenn es sich in tödliche Dummheiten stürzen will.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 21 Tabelle -->
+<section class="slide" data-foot="Shagra spielen">
+  <h2>Was von den Orks in Shagra steckt</h2>
+  <table style="font-size:20px">
+    <thead><tr><th>Ork-Lore</th><th>So zeigt es sich bei Shagra</th></tr></thead>
+    <tbody>
+      <tr><td>Gruumshs Auftrag „Nimm dir, was dir zusteht“</td><td>Sie nimmt ihn wörtlich, aber für ihre Freiheit statt für Beute</td></tr>
+      <tr><td>Luthics Kult und die Omen</td><td>Sie liest Zeichen, auch wenn sie es nicht zugibt. Ein Omen ignoriert sie nie.</td></tr>
+      <tr><td>Shargaas, der Gott der Meuchler</td><td>Ihr Maßstab für Ehrlosigkeit: Gift, Hinterhalte, Gucklöcher</td></tr>
+      <tr><td>Recht des Stärkeren</td><td>Sie respektiert Stärke, auch bei Gegnern und Gastgebern</td></tr>
+      <tr><td>Frauen als Besitz</td><td>Ihre empfindlichste Stelle. Wer Menschen besitzt, wird ihr Feind.</td></tr>
+      <tr><td>Sexualität als Besitz, Pflicht und Rang</td><td>Zärtlichkeit und Lust als etwas Freies hat sie nie kennengelernt, geschweige denn das Gefühl von Liebe. Bei Sex und Begehren ist sie zurückhaltend und oft angewidert, auch wenn sie im Rudel Bindung und Treue kennt.</td></tr>
+      <tr><td>Kurzes Leben</td><td>Sie lebt jetzt, feiert gern und schiebt nichts auf morgen</td></tr>
+      <tr><td>Zugehörigkeit zum Stamm</td><td>Ihr Stamm ist jetzt ihre Gruppe, ihr Rudel</td></tr>
+      <tr><td>Entdeckerlust und Freiheitssinn</td><td>Der Grund, warum sie überhaupt unterwegs ist</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- 22 Weltsicht -->
+<section class="slide" data-foot="Durch ihre Augen">
+  <h2>Wie eine Orkin die Welt sieht</h2>
+  <dl class="two-col" style="font-size:21px">
+    <div><dt>Der Körper</dt><dd>Etwa zwei Meter groß, breit gebaut, mit Hauern wie ein Wildschwein. Türen sind zu niedrig, Stühle zu zierlich, Teetassen lächerlich. Ein Raum voller Adliger fühlt sich an wie ein Porzellanladen.</dd></div>
+    <div><dt>Stärke ist Sprache</dt><dd>Rang, Respekt und Zuneigung zeigt man mit dem Körper: Unterarm an Unterarm, Schulterklopfen, Kräftemessen. Wer ihr nach einem Faustkampf aufhilft, hat mehr Respekt verdient als jemand mit schönen Worten. Wer sich hinter Wachen, Titeln oder Gift versteckt, wirkt schwach oder ehrlos.</dd></div>
+    <div><dt>Die Welt ist voller Zeichen</dt><dd>Ein einäugiger Rabe, Blut auf dem Boden, eine Katze, die sie anstarrt, ein zerbrochener Krug: Für Shagra hat das alles eine Bedeutung.</dd></div>
+    <div><dt>Götterfurcht</dt><dd>Gruumsh und Luthic sind keine freundlichen Götter. Man ehrt sie und hält sie gleichzeitig auf Abstand. Untote, Dämonen und dunkle Magie sind für sie Dinge, die die Götter beleidigen.</dd></div>
+    <div><dt>Leben ist kurz</dt><dd>Shagra hat viele aus ihrem Stamm sterben sehen. Dass Elfen jahrhundertelang leben und trotzdem zögern, ist ihr unbegreiflich.</dd></div>
+    <div class="note" style="padding:16px 22px"><dt>Lust und Besitz</dt><dd>Im Stamm hieß Begehren für eine Frau immer, einem anderen zu gehören. Offene Lust stößt Shagra eher ab, als dass sie sie reizt. Wo sie Besitz wittert, etwa beim Personal oder bei der angeketteten Diebin, wird aus Ekel Zorn. Dass andere Lust frei und mit Freude erleben, ist ihr fremd und verwirrt sie.</dd></div>
+  </dl>
+</section>
+
+<!-- 23 Andere -->
+<section class="slide" data-foot="Durch ihre Augen">
+  <div class="split rev">
+    <div class="col">
+      <h2>Wie andere sie sehen</h2>
+      <ul class="runes">
+        <li>Für Menschen, Elfen und Zwerge sind Orks Plünderer und Monster. Bei Elfen wiegt die Feindschaft besonders schwer, sie reicht bis zu Gruumsh und Corellon zurück.</li>
+        <li>Viele halten Orks für dumm. Shagra kann das nutzen: Wer sie unterschätzt, redet in ihrer Gegenwart zu offen.</li>
+        <li>Wachen, Adlige und Gastgeber begegnen ihr mit Argwohn. Man rückt von ihr ab, zählt nach ihrem Besuch das Silber nach, oder es fällt ein Satz wie „Lasst die Ork-Frau nicht an den Wein.“</li>
+      </ul>
+      <div class="note">
+        <h4>Wichtig</h4>
+        <p class="small">Vorurteile sollen Würze sein, kein Dauerzustand. Ein, zwei spürbare Momente pro Abend und dazu NPCs, die sie positiv überrascht, sind ideal.</p>
+      </div>
+    </div>
+    <div class="pic hang-pic" data-fx="snow" style="background-image:url('images/Orkin5.jpg')"><div class="heads"></div></div>
+  </div>
+</section>
+
+<!-- 25 Nacht -->
+<section class="slide" data-foot="Eine Nacht in der Villa">
+  <div class="split">
+    <div class="cutout night breathe" data-spots="eyes:13,45,30,y;glint:94,9,70" style="background-image:url('images/ork-cat1.png')"></div>
+    <div class="col">
+      <h2>Eine Nacht in der Villa</h2>
+      <div class="desc" style="margin-bottom:0">
+        <div class="by">erzählt von Shagra</div>
+        <p style="font-size:20.5px">Das Bett ist zu weich. Ich liege darin wie in einem Sumpf und kann nicht schlafen. Durch die Wände höre ich Lachen, Stöhnen, Gläser, die Geräusche dieses Hauses, das nie still ist. Die anderen nennen es ein Fest. Für mich riecht es wie das Zelt des Häuptlings damals: süß, schwer, und irgendwo darunter Angst.</p>
+        <p style="font-size:20.5px">Ich denke an die Elfe hinter der Trophäenkammer. An die Ketten und an ihre Stimme, als sie sagte, was man mit ihr macht. Die anderen haben gestritten, ob man sie freilassen darf. Ich habe geschwiegen, weil ich nicht wusste, wie man in einem fremden Haus richtig kämpft. Aber mein Magen weiß es. Mein Magen hat sich zusammengezogen wie damals, als der Krieger vor dem ganzen Stamm die Hand nach mir ausstreckte.</p>
+        <p style="font-size:20.5px">Hier lächeln alle. Die Herrin des Hauses läuft nackt durch die Gänge und lächelt, und die Mädchen in den Zimmern lächeln auch. Ich habe gelernt, Zähne zu lesen. Nicht jedes Lächeln ist Freude.</p>
+        <p style="font-size:20.5px">Morak ist draußen, und ich vermisse sein Schnaufen neben mir. Leise, ganz leise pfeife ich den alten Jagdruf, so leise, dass er ihn nicht hören kann. Nur damit ich selbst nicht vergesse, wer ich bin: Niemand besitzt mich. Und solange ich atme, soll in diesem Haus auch niemand anderem gehören, der es nicht will.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 26 Ende -->
+<section class="slide" data-foot="Ein Experiment">
+  <div class="hero">
+    <div>
+      <div class="kicker" style="color:#8c7a4b">Danke fürs Lesen</div>
+      <div class="quote" style="font-size:58px; color:var(--header)">Ich bin gespannt, was du aus Shagra machst.</div>
+    </div>
+    <div class="cutout enter-right sway" data-spots="glint:95,10,70" style="background-image:url('images/orktiger.png')"></div>
+  </div>
+</section>
+
+</div>
+<div id="progress"></div>
+<div id="hint">← → blättern · F Vollbild</div>
+
+<script>
+(function () {
+  const stage = document.getElementById('stage');
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const progress = document.getElementById('progress');
+  let current = 0;
+
+  // Fußzeile im Stil der Homebrewery-Footnote ergänzen
+  slides.forEach((s, i) => {
+    const f = document.createElement('div');
+    f.className = 'foot';
+    f.innerHTML = '<span>Shagra Morakai · ' + (s.dataset.foot || '') + '</span><span>' + (i + 1) + ' / ' + slides.length + '</span>';
+    s.appendChild(f);
+  });
+
+  // Bildebene erzeugen (für Ken Burns) und Effekte an Bildstellen platzieren
+  const RAVEN = '<svg viewBox="0 0 60 30"><path d="M0 13 Q14 1 30 15 Q46 1 60 13 Q44 8 31 22 L29 22 Q16 8 0 13Z" fill="#140c08"/></svg>';
+  const COLORS = { r: 'rgba(255,40,20,.85)', y: 'rgba(255,200,70,.8)', g: 'rgba(190,255,90,.8)' };
+  function posFrac(v, axis) {
+    const map = { left: 0, top: 0, center: .5, right: 1, bottom: 1 };
+    if (v in map) return map[v];
+    return v.endsWith('%') ? parseFloat(v) / 100 : .5;
+  }
+  document.querySelectorAll('.pic, .bg, .cutout').forEach(el => {
+    const img = el.style.backgroundImage;
+    let host = el;
+    if (!el.classList.contains('cutout')) {
+      const layer = document.createElement('div');
+      layer.className = 'layer';
+      layer.style.backgroundImage = img;
+      layer.style.backgroundPosition = el.style.backgroundPosition || 'center';
+      el.insertBefore(layer, el.firstChild);
+      host = layer;
+    }
+    if (!el.dataset.spots) return;
+    const src = img.slice(5, -2);
+    const probe = new Image();
+    probe.onload = () => {
+      const W = host.offsetWidth, H = host.offsetHeight, w = probe.naturalWidth, h = probe.naturalHeight;
+      const contain = el.classList.contains('cutout');
+      const fill = el.classList.contains('hang-pic');
+      let rw, rh, ox, oy;
+      if (fill) { rw = W; rh = H; ox = 0; oy = 0; }
+      else {
+        const sc = contain ? Math.min(W / w, H / h) : Math.max(W / w, H / h);
+        rw = w * sc; rh = h * sc;
+        const bp = (contain ? 'center center' : (el.style.backgroundPosition || 'center center')).split(/\s+/);
+        const px = posFrac(bp[0] || 'center'), py = posFrac(bp[1] || 'center');
+        ox = (W - rw) * px; oy = (H - rh) * py;
+      }
+      const X = f => ox + rw * f / 100, Y = f => oy + rh * f / 100;
+      el.dataset.spots.split(';').forEach((def, i) => {
+        const [type, rest] = def.split(':');
+        const a = rest.split(',');
+        const n = a.map(Number);
+        const sp = document.createElement('div');
+        sp.className = 'spot ' + type;
+        const scale = rw / w * (w / 1000);
+        if (type === 'rays' || type === 'falls') {
+          sp.style.left = X(n[0]) + 'px'; sp.style.top = Y(n[1]) + 'px';
+          sp.style.width = rw * n[2] / 100 + 'px'; sp.style.height = rh * n[3] / 100 + 'px';
+        } else if (type === 'raven') {
+          sp.style.top = Y(n[1]) + 'px'; sp.style.width = n[2] + 'px';
+          sp.innerHTML = RAVEN;
+        } else {
+          const size = n[2] * Math.max(.45, Math.min(1.4, scale));
+          sp.style.left = X(n[0]) + 'px'; sp.style.top = Y(n[1]) + 'px';
+          sp.style.width = sp.style.height = size + 'px';
+          if (type === 'eyes') sp.style.setProperty('--c', COLORS[a[3]] || COLORS.r);
+          if (type === 'fire') sp.style.setProperty('--d', (1 + Math.random() * .9).toFixed(2) + 's');
+          if (type === 'drip') { sp.style.setProperty('--fall', n[2] + 'px'); sp.style.setProperty('--d', (3 + Math.random() * 1.5).toFixed(2) + 's'); sp.style.setProperty('--delay', (i * .9).toFixed(1) + 's'); }
+          if (type === 'glint') sp.style.setProperty('--delay', (1 + i * .7).toFixed(1) + 's');
+          if (type === 'breath') {
+            const dir = a[3] || 'u';
+            sp.style.setProperty('--bx', dir === 'r' ? '40px' : dir === 'l' ? '-40px' : '0px');
+            sp.style.setProperty('--by', dir === 'u' ? '-45px' : '-15px');
+          }
+        }
+        host.appendChild(sp);
+      });
+    };
+    probe.src = src;
+  });
+
+  // Partikel für Schnee, Glut und Staub erzeugen
+  document.querySelectorAll('[data-fx]').forEach(el => {
+    const kind = el.dataset.fx;
+    const host = el.classList.contains('bg') ? el.parentElement : el;
+    const fx = document.createElement('div');
+    fx.className = 'fx ' + kind;
+    const counts = { snow: 70, embers: 34, dust: 26 };
+    const rnd = (a, b) => a + Math.random() * (b - a);
+    for (let i = 0; i < (counts[kind] || 0); i++) {
+      const p = document.createElement('i');
+      const size = kind === 'snow' ? rnd(2, 6) : kind === 'embers' ? rnd(2, 4) : rnd(1.5, 3);
+      p.style.width = p.style.height = size + 'px';
+      p.style.left = rnd(0, 100) + '%';
+      p.style.top = kind === 'snow' ? rnd(-10, 0) + '%' : kind === 'embers' ? rnd(70, 105) + '%' : rnd(20, 90) + '%';
+      if (kind === 'dust') p.style.left = rnd(-20, 60) + '%';
+      p.style.setProperty('--dx', rnd(-60, 60) + 'px');
+      p.style.animationDuration = (kind === 'snow' ? rnd(7, 14) : kind === 'embers' ? rnd(3, 7) : rnd(6, 11)) + 's';
+      p.style.animationDelay = -rnd(0, 12) + 's';
+      fx.appendChild(p);
+    }
+    if (el.classList.contains('bg')) el.insertAdjacentElement('afterend', fx);
+    else host.appendChild(fx);
+  });
+
+  function fit() {
+    const scale = Math.min(window.innerWidth / 1600, window.innerHeight / 900);
+    stage.style.transform = 'translate(-50%, -50%) scale(' + scale + ')';
+  }
+
+  function show(n) {
+    current = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((s, i) => s.classList.toggle('active', i === current));
+    progress.style.width = ((current + 1) / slides.length * 100) + '%';
+    history.replaceState(null, '', '#' + (current + 1));
+  }
+
+  document.addEventListener('keydown', e => {
+    if (['ArrowRight', 'ArrowDown', 'PageDown', ' ', 'Enter'].includes(e.key)) { e.preventDefault(); show(current + 1); }
+    else if (['ArrowLeft', 'ArrowUp', 'PageUp', 'Backspace'].includes(e.key)) { e.preventDefault(); show(current - 1); }
+    else if (e.key === 'Home') show(0);
+    else if (e.key === 'End') show(slides.length - 1);
+    else if (e.key === 'f' || e.key === 'F') {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+      else document.exitFullscreen();
+    }
+  });
+
+  document.addEventListener('click', e => {
+    show(e.clientX > window.innerWidth / 3 ? current + 1 : current - 1);
+  });
+
+  let touchX = null;
+  document.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; }, { passive: true });
+  document.addEventListener('touchend', e => {
+    if (touchX === null) return;
+    const dx = e.changedTouches[0].clientX - touchX;
+    if (Math.abs(dx) > 40) show(dx < 0 ? current + 1 : current - 1);
+    touchX = null;
+  });
+
+  const scaleOf = () => stage.getBoundingClientRect().width / 1600;
+
+  // Zu lange Texte verkleinern, bis sie auf die Folie passen
+  function autofit() {
+    slides.forEach(s => {
+      if (s.classList.contains('dark')) return;
+      const cols = s.querySelectorAll('.col');
+      const boxes = cols.length ? Array.from(cols) : [s];
+      boxes.forEach(box => {
+        const kids = Array.from(box.children).filter(k => !k.matches('.foot, .bg, .pic'));
+        let z = 1;
+        kids.forEach(k => { k.style.zoom = 1; });
+        // Unterkante des Inhalts im Verhältnis zur Box (Folien: oberhalb der Fußzeile)
+        const overflows = () => {
+          const top = box.getBoundingClientRect().top;
+          const limit = box === s ? (900 - 66) * scaleOf() : box.getBoundingClientRect().height;
+          const bottom = Math.max(...kids.map(k => k.getBoundingClientRect().bottom - top));
+          return bottom > limit + 1;
+        };
+        while (overflows() && z > 0.7) {
+          z -= 0.02;
+          kids.forEach(k => { k.style.zoom = z; });
+        }
+      });
+    });
+  }
+
+  window.addEventListener('resize', fit);
+  fit();
+  autofit();
+  if (document.fonts) document.fonts.ready.then(autofit);
+  const start = parseInt(location.hash.slice(1), 10);
+  show(isNaN(start) ? 0 : start - 1);
+})();
+</script>
+</body>
+</html>
