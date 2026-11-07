@@ -1,0 +1,1052 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zwei Wirklichkeiten</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=IM+Fell+English+SC&family=IM+Fell+English:ital@1&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #f5e6d2;
+  --ink: #2b2118;
+  --header: #58180d;
+  --gold: #8a6a3a;
+  --muted: #6b5536;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body { background: var(--paper); font-family: "EB Garamond", Georgia, serif; color: var(--ink); }
+
+/* Fixe 1600×900-Bühne, per JS skaliert */
+#stage { position: absolute; left: 50%; top: 50%; width: 1600px; height: 900px; transform-origin: center center; background: var(--paper); overflow: hidden; }
+.slide { position: absolute; inset: 0; opacity: 0; visibility: hidden; transition: opacity .9s ease, visibility 0s linear .9s; }
+.slide.active { opacity: 1; visibility: visible; transition: opacity .9s ease; }
+
+/* Szenenbild */
+.bg { position: absolute; inset: 0; overflow: hidden; }
+.bg > div { position: absolute; inset: -2%; background-size: cover; background-position: center; }
+.slide.active .bg > div { animation: drift 28s ease-in-out infinite alternate; }
+.bg.zoom > div { transform-origin: 30% 65%; }
+.slide.active .bg.zoom > div { animation: zoomin 30s ease-out forwards; }
+@keyframes drift { from { transform: scale(1.02) translate(0, 0); } to { transform: scale(1.08) translate(-1.2%, -.8%); } }
+@keyframes zoomin { from { transform: scale(1.35); } to { transform: scale(1.55); } }
+/* Papierverlauf nach rechts, damit Text und Porträts lesbar bleiben */
+.bg::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to left, var(--paper) 0%, rgba(245,230,210,.92) 30%, rgba(245,230,210,0) 58%); }
+.bg.bottom::after { background: linear-gradient(to top, var(--paper) 0%, rgba(245,230,210,.9) 22%, rgba(245,230,210,0) 45%); }
+.bg.dim::after { background: radial-gradient(ellipse at center, rgba(245,230,210,.88) 0%, rgba(245,230,210,.75) 45%, rgba(245,230,210,.35) 100%); }
+.bg.none::after { display: none; }
+
+/* Textspalte rechts */
+.col { position: absolute; right: 70px; top: 70px; width: 640px; text-align: center; }
+.kicker { font-family: "IM Fell English SC", serif; font-size: 28px; color: var(--gold); letter-spacing: 3px; }
+h1 { font-family: "IM Fell English SC", serif; font-weight: 400; color: var(--header); font-size: 96px; line-height: 1; margin: 10px 0 14px; }
+h2 { font-family: "IM Fell English SC", serif; font-weight: 400; color: var(--header); font-size: 66px; line-height: 1; margin: 6px 0 4px; }
+.rule { width: 260px; height: 2px; margin: 16px auto 22px; background: linear-gradient(to right, transparent, var(--gold), transparent); }
+.sub { font-family: "IM Fell English", serif; font-style: italic; font-size: 34px; color: var(--muted); }
+.quote { font-family: "IM Fell English", serif; font-style: italic; font-size: 40px; line-height: 1.2; color: var(--ink); margin-top: 26px; }
+.big { font-family: "IM Fell English", serif; font-style: italic; font-size: 78px; line-height: 1.1; color: var(--header); }
+
+/* Porträts */
+.portraits { display: flex; flex-wrap: wrap; justify-content: center; gap: 18px 30px; margin-top: 8px; }
+.pt { width: 190px; text-align: center; }
+.pt.l { width: 270px; }
+.pt.xl { width: 340px; }
+.pt .img { width: 100%; aspect-ratio: 1; background-size: cover; background-position: center 30%; mix-blend-mode: multiply;
+  -webkit-mask-image: radial-gradient(circle at 50% 46%, #000 52%, transparent 71%); mask-image: radial-gradient(circle at 50% 46%, #000 52%, transparent 71%); }
+.pt figcaption { font-family: "IM Fell English", serif; font-style: italic; font-size: 23px; line-height: 1.15; color: var(--muted); margin-top: -6px; }
+.pt figcaption b { display: block; font-family: "IM Fell English SC", serif; font-style: normal; font-weight: 400; font-size: 26px; color: var(--header); }
+
+/* Schrittweise Einblendung */
+.frag { opacity: 0; transform: translateY(14px); transition: opacity .8s ease, transform .8s ease; }
+.frag.on { opacity: 1; transform: none; }
+.slide.active .pt.on .img { animation: breathe 7s ease-in-out infinite alternate; }
+@keyframes breathe { from { transform: scale(1); } to { transform: scale(1.035); } }
+
+/* Galerie am Ende */
+.gallery { position: absolute; inset: 60px 70px; text-align: center; }
+.gallery .portraits { gap: 10px 26px; margin-top: 18px; }
+.gallery .pt { width: 230px; }
+
+/* Leiste, Fortschritt */
+#progress { position: fixed; left: 0; bottom: 0; height: 4px; background: var(--gold); transition: width .5s ease; z-index: 5; }
+
+/* SL-Notizen, nur mit Taste V */
+#sl { position: fixed; left: 0; right: 0; bottom: 0; max-height: 46vh; overflow: auto; background: rgba(43,33,24,.94); color: #f3e7d3; padding: 18px 28px 22px; font-size: 18px; line-height: 1.45; transform: translateY(105%); transition: transform .35s ease; z-index: 10; }
+#sl.open { transform: none; }
+#sl h3 { font-family: "IM Fell English SC", serif; font-weight: 400; color: #e0b770; font-size: 20px; margin: 10px 0 4px; }
+#sl h3:first-child { margin-top: 0; }
+#sl p, #sl li { margin-bottom: 6px; }
+#sl ul, #sl ol { padding-left: 22px; }
+#sl .click { color: #e0b770; font-family: "IM Fell English SC", serif; font-size: .95em; margin: 10px 0 2px; }
+#sl span.click { font-style: normal; white-space: nowrap; margin: 0 4px; }
+#sl .read { font-style: italic; border-left: 3px solid #e0b770; padding-left: 12px; }
+.slide aside { display: none; }
+
+
+/* Vorschau-Modus (für die Referenten-Ansicht): alles sichtbar, keine Bewegung */
+body.preview .frag { opacity: 1; transform: none; transition: none; }
+body.preview .slide { transition: none; }
+body.preview .bg > div, body.preview .pt .img { animation: none !important; }
+body.preview #progress, body.preview #sl { display: none; }
+
+/* Referenten-Ansicht */
+#pv { display: none; }
+body.presenter { background: #1f1813; color: #f3e7d3; }
+body.presenter #pv { display: block; }
+body.presenter #progress { display: none; }
+body.presenter #stage { box-shadow: 0 0 0 1px #5a4632, 0 10px 30px rgba(0,0,0,.5); }
+#pv-bar { position: fixed; left: 16px; right: 16px; top: 10px; height: 46px; display: flex; align-items: center; gap: 14px; font-size: 20px; }
+#pv-bar .title { font-family: "IM Fell English SC", serif; color: #e0b770; font-size: 26px; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#pv-bar button { font: inherit; font-size: 18px; background: #3a2c20; color: #f3e7d3; border: 1px solid #6b5536; border-radius: 6px; padding: 6px 14px; cursor: pointer; }
+#pv-bar button:hover { background: #4a3828; }
+#pv-bar .open { background: #8a6a3a; border-color: #e0b770; color: #fff; }
+#pv-scenes button { padding: 6px 10px; font-size: 16px; }
+#pv-scenes button.cur { border-color: #e0b770; color: #e0b770; }
+#pv-timer { font-variant-numeric: tabular-nums; cursor: pointer; min-width: 70px; text-align: right; }
+#pv-cur { position: fixed; left: 16px; top: 66px; width: calc(60vw - 24px); height: calc((60vw - 24px) * 9 / 16); }
+body.presenter #sl { position: fixed; left: 16px; width: calc(60vw - 24px); top: calc(66px + (60vw - 24px) * 9 / 16 + 14px); bottom: 16px; max-height: none; transform: none; border-radius: 8px; border: 1px solid #5a4632; background: #2b2118; font-size: 20px; }
+#pv-side { position: fixed; left: 60vw; right: 16px; top: 66px; bottom: 16px; display: flex; flex-direction: column; gap: 12px; }
+#pv-side .lbl { font-family: "IM Fell English SC", serif; color: #e0b770; font-size: 20px; }
+#pv-next { width: 100%; aspect-ratio: 16 / 9; border: 1px solid #5a4632; border-radius: 4px; background: var(--paper); }
+#pv-frag { font-size: 20px; color: #e0b770; min-height: 28px; }
+#pv-help { margin-top: auto; font-size: 16px; line-height: 1.5; color: #bfae94; }
+#pv-help b { color: #f3e7d3; }
+
+@media (prefers-reduced-motion: reduce) {
+  .slide, .frag, #sl { transition: none !important; }
+  .bg > div, .pt .img { animation: none !important; }
+}
+</style>
+</head>
+<body>
+<div id="stage">
+
+<!-- Deckblatt -->
+<section class="slide" data-scene="Start" data-title="Zwei Wirklichkeiten">
+  <div class="bg dim"><div style="background-image:url(img/wh-szene-vor-dem-tor.jpg)"></div></div>
+  <div class="col" style="left:0; right:0; width:auto; top:250px">
+    <div class="kicker">Eine Rollentausch-Sitzung mit Shagra</div>
+    <h1>Zwei Wirklichkeiten</h1>
+    <div class="rule"></div>
+    <div class="sub">Winterhaven · Die Arena · Die Diebin</div>
+  </div>
+  <aside>
+<h3>So ist die Präsentation aufgebaut</h3>
+<p>Alle drei Szenen in der Reihenfolge der Sitzung: <b>Winterhaven</b>, <b>Die Arena</b>, <b>Die Diebin</b>. Jede Szene beginnt mit ihrer eigenen Titelfolie, in deren Notizen die Einleitung, die Figuren und (bei der Diebin) die Absprache zu den Grenzen stehen.</p>
+<p>Springen: Tasten <b>1</b>, <b>2</b>, <b>3</b> oder die Szenen-Knöpfe in der Referenten-Ansicht führen direkt zur Titelfolie der Szene. <b>0</b> führt hierher zurück.</p>
+<p><b>Vor der Sitzung:</b> Mit Azura absprechen, ob die Diebin-Szene (Vergewaltigung, nie beschrieben) gespielt wird oder mit Schleier.</p>
+  </aside>
+</section>
+
+<!-- ===================== WINTERHAVEN ===================== -->
+
+<!-- 1 Titel -->
+<section class="slide" data-scene="Winterhaven" data-start data-title="Titel">
+  <div class="bg"><div style="background-image:url(img/wh-szene-vor-dem-tor.jpg)"></div></div>
+  <div class="col" style="top:230px">
+    <div class="kicker">Eine Erinnerung</div>
+    <h1>Ankunft in Winterhaven</h1>
+    <div class="rule"></div>
+    <div class="sub">Mittag am Nordtor</div>
+  </div>
+  <aside>
+<h3>Überleitung aus der Villa</h3>
+<p class="read">Das Bett ist zu weich. Du liegst darin wie in einem Sumpf. Durch die Wände hörst du Lachen, Gläser, Stöhnen, ein Haus, das nie still ist. Du schließt die Augen. Und hinter deinen Lidern steht noch einmal die Mittagssonne über dem Tor von Winterhaven …</p>
+<h3>Worum es geht</h3>
+<p>Mittag am Nordtor von Winterhaven. Die Gruppe wartet mit der Kutsche in der Schlange, um in die Stadt zu kommen. Am Tor wird kontrolliert. Shagra sitzt oben auf dem Kutschbock, für alle sichtbar. Die Wachen sind korrekt, die Leute neugierig. Dann wirft ein Mann einen Apfel nach Shagra, weil Orks seinen Bruder getötet haben. Die Wache weist ihn zurecht, nicht Shagra. Azura entscheidet, wie Shagra reagiert. Danach fährt der Wagen in die Stadt. Etwa 20 Minuten.</p>
+<p><b>Was Shagra erlebt:</b> Shagra kennt Städte nur aus den Erzählungen ihres Stammes, als Orte voller Feinde. Jeder Blick ist für sie eine Drohung, jede Hand am Schwertgriff eine Absicht. Dass hier niemand sie angreift, verwirrt sie: Sie weiß nicht, wie sie sich verhalten soll, wenn sie nicht kämpfen muss. Und dann gibt es doch einen, der sie hasst. Nicht weil die Stadt es tut, sondern weil er einen eigenen Grund hat.</p>
+<h3>Wer vorkommt</h3>
+<ul>
+<li><b>Jenna Valentine:</b> fährt die Kutsche, sitzt neben Shagra. Ruhig, pragmatisch, kennt Winterhaven, will nur hinein. „Ganz ruhig. Das ist hier normal.“ · „Sie reist mit uns.“</li>
+<li><b>Luisa, Kimiko, Isura</b> sitzen drinnen, Isura ist krank und schläft. Kimiko meldet sich erst am Ende. <b>Morak</b> schläft hinten in der Kutsche, man hört ihn schnarchen.</li>
+<li><b>Feldwebel Brannick:</b> älter, roter Bart mit grauen Strähnen, müde Augen. Seit zwanzig Jahren dieselbe Arbeit, gerecht und gründlich. Shagra ist für ihn ein Name auf einer Liste wie jeder andere. Wird nie laut.</li>
+<li><b>Wachmann Jost:</b> jung, schlaksig, Sommersprossen, erst ein paar Wochen im Dienst. Hat noch nie eine Orkin aus der Nähe gesehen, neugierig, unbeholfen. Hand bei jedem Wagen am Schwertgriff, weil man es ihm so beigebracht hat.</li>
+<li><b>Edrik Holm, Gerber:</b> Mitte vierzig, Lederschürze, fleckige Hände. Bruder Tam, Fuhrmann, vor drei Wintern bei Dunkelwasser von Orks getötet, zwei Kinder, um die Edrik sich jetzt kümmert. Kein Hetzer, er trauert. Wirft einmal und bereut es sofort halb.</li>
+<li><b>Rosi Rundfuß, Halblingsfrau:</b> Kopftuch, Korb Eier, kennt Edrik vom Markt und beruhigt ihn.</li>
+<li><b>Der Zwerg:</b> grauer Bart, lahmes Pony, schimpft über alles. Spuckt aus, als Edrik wirft. Wen er meint, bleibt offen.</li>
+<li><b>Weitere:</b> zwei Halblinge mit Ziegen, eine Tieflings-Familie mit zwei Kindern, Bauern mit Zwiebelkörben.</li>
+<li><b>Grubka</b> (optional): Orkin aus der Stadt, Metzgerin im Schlachterviertel, Messingringe an den Hauern. Die Wachen kennen sie.</li>
+</ul>
+</aside>
+</section>
+
+<!-- 2 Vor dem Tor -->
+<section class="slide" data-scene="Winterhaven" data-title="Vor dem Tor">
+  <div class="bg"><div style="background-image:url(img/wh-szene-vor-dem-tor.jpg)"></div></div>
+  <div class="col">
+    <h2>Vor dem Tor</h2>
+    <div class="rule"></div>
+    <div class="portraits">
+      <figure class="pt frag"><div class="img" style="background-image:url(img/wh-p-tieflingskind.jpg)"></div><figcaption>Ein Kind zeigt auf dich</figcaption></figure>
+      <figure class="pt frag"><div class="img" style="background-image:url(img/wh-p-baeuerin.jpg)"></div><figcaption>Eine Frau zieht ihren Korb an sich</figcaption></figure>
+      <figure class="pt frag"><div class="img" style="background-image:url(img/wh-p-jost.jpg)"></div><figcaption>Eine Hand am Schwertgriff</figcaption></figure>
+      <figure class="pt frag"><div class="img" style="background-image:url(img/wh-p-tieflingsmutter.jpg)"></div><figcaption>„Mama, guck mal, die hat Zähne wie ein Wildschwein!“</figcaption></figure>
+    </div>
+  </div>
+  <aside>
+<p>Die Kutsche steht in der Schlange vor dem Nordtor. Lies vor:</p>
+<p class="read">Die Mittagssonne steht hoch über Winterhaven und wärmt kaum. Vor dem Nordtor staut sich eine Schlange aus Karren, Bauern und Händlern. Es stinkt nach Pferdemist, nassem Stroh und Zwiebeln von einem Garstand. Ein Zwerg flucht über sein lahmes Pony, zwei Halblinge zerren an störrischen Ziegen. Du sitzt oben auf dem Kutschbock neben Jenna und siehst über alle Köpfe hinweg. Hinter dir, durch das Holz der Kutsche, hörst du Morak schnarchen, tief und gleichmäßig. Wenigstens einer, der hier keine Angst hat. Schritt für Schritt rollt der Wagen vorwärts, und mit jedem Schritt drehen sich Köpfe zu dir um.</p>
+<p>Beschreib Azura danach drei Blicke, so wie Shagra sie liest, nicht wie sie gemeint sind:</p>
+<p class="click">▶ Weiter: Tieflingskind</p>
+<p>Ein Tieflingskind zeigt mit dem Finger auf sie und sagt etwas zu seiner Mutter.</p>
+<p class="click">▶ Weiter: Bäuerin</p>
+<p>Eine Bäuerin zieht ihren Korb näher an sich.</p>
+<p class="click">▶ Weiter: junger Wachmann</p>
+<p>Vorne am Tor legt ein junger Wachmann die Hand auf den Schwertgriff und sieht zu ihr herüber.</p>
+<p>Frag dann: <b>„Was glaubt Shagra, was diese Leute denken?“</b></p>
+<p>Verrate noch nicht, was die Blicke wirklich bedeuten. Das kommt nach und nach:</p>
+<p class="click">▶ Weiter: Tieflingsmutter</p>
+<p>Das Kind ruft: „Mama, guck mal, die hat Zähne wie ein Wildschwein!“ und strahlt dabei. Die Mutter lächelt verlegen.</p>
+<ul>
+<li>Die Bäuerin trägt ihren Korb immer so. Sie macht das auch beim Zwerg, kannst du nebenbei erwähnen.</li>
+<li>Jost hat die Hand bei jedem Wagen am Schwertgriff. Das zeigt sich auf der nächsten Folie „Die Kontrolle“.</li>
+</ul>
+</aside>
+</section>
+
+<!-- 3 Die Kontrolle -->
+<section class="slide" data-scene="Winterhaven" data-title="Die Kontrolle">
+  <div class="bg"><div style="background-image:url(img/wh-szene-kontrolle.jpg)"></div></div>
+  <div class="col">
+    <h2>Die Kontrolle</h2>
+    <div class="rule"></div>
+    <div class="portraits">
+      <figure class="pt l frag"><div class="img" style="background-image:url(img/wh-p-brannick.jpg)"></div><figcaption><b>Der Feldwebel</b>„Name?“</figcaption></figure>
+      <figure class="pt l frag"><div class="img" style="background-image:url(img/wh-p-jost.jpg)"></div><figcaption><b>Der junge Wachmann</b>„Sind das echte Hauer?“</figcaption></figure>
+    </div>
+  </div>
+  <aside>
+<p>Die Kutsche ist vorne angekommen. Brannick und Jost treten heran. Lies vor:</p>
+<p class="read">Zwei Wachen versperren den Weg, Kettenhemd, das Stadtwappen auf der Brust. Der Ältere, ein Mann mit rotem Bart und müden Augen, streckt wortlos die Hand nach Jennas Papieren aus. Der Jüngere hat die Hand am Schwertgriff und sieht zu dir hoch. Lange. Dann nickt er dir zu, knapp, wie man einem Söldner zunickt. Du weißt nicht, was das bedeutet. Im Stamm hieß ein langer Blick: Ich prüfe, ob ich dich schlagen kann.</p>
+<p>Dann spielst du die Kontrolle in dieser Reihenfolge:</p>
+<p class="click">▶ Weiter: Feldwebel</p>
+<ol>
+<li><b>Brannick</b> liest Jennas Papiere: „Papiere stimmen. Waffen bleiben am Körper, gezogen wird in der Stadt nichts. Das gilt für jeden.“</li>
+<li><b>Jenna</b> leise zu Shagra: „Ganz ruhig. Das ist hier normal.“</li>
+<li><b>Brannick</b> zu Shagra, ganz sachlich: „Name?“ Er schreibt ihn auf wie jeden anderen. Lass Azura antworten.</li>
+<li><b>Brannick</b> wirft einen Blick in die Kutsche, sieht den schlafenden Tiger und hält inne: „Und der?“</li>
+<li><b>Jenna:</b> „Gehört zu ihr. Er schläft.“</li>
+<li><b>Brannick</b> seufzt, schreibt etwas dazu und murmelt: „Wenn er wach wird, ist er Euer Problem.“</li>
+</ol>
+<p class="click">▶ Weiter: junger Wachmann</p>
+<ol start="7">
+<li><b>Jost</b> fasst sich ein Herz und fragt Shagra: „Verzeihung, sind das echte Hauer? Meine Schwester glaubt mir das sonst nicht.“</li>
+</ol>
+<p>Lass Azura auf Jost reagieren. Shagra kann die Frage als Spott oder als Neugier lesen. Beides ist in Ordnung. Antwortet Shagra freundlich, freut sich Jost wie ein Kind. Knurrt sie, wird er rot und tritt einen Schritt zurück.</p>
+<p>Erwähne nebenbei: Beim Karren davor hatte Jost die Hand genauso am Schwertgriff.</p>
+</aside>
+</section>
+
+<!-- 4 Der Apfel -->
+<section class="slide" data-scene="Winterhaven" data-title="Der Apfel">
+  <div class="bg"><div style="background-image:url(img/wh-szene-apfel.jpg)"></div></div>
+  <div class="col" style="top:90px">
+    <h2>Der Apfel</h2>
+    <div class="rule"></div>
+    <figure class="pt xl frag" style="margin:0 auto"><div class="img" style="background-image:url(img/wh-p-holm.jpg)"></div><figcaption><b>Der Mann mit der Schürze</b></figcaption></figure>
+    <div class="quote frag">„So eine wie du hat meinen Bruder erschlagen!“</div>
+  </div>
+  <aside>
+<p>Während Brannick noch schreibt, passiert es. Lies vor:</p>
+<p class="read">Etwas Weiches trifft dich an der Schulter und klatscht auf den Kutschbock: ein angebissener Apfel, braun und matschig. Du drehst den Kopf. In der Schlange neben euch steht ein Kerl mit Lederschürze, die Hand noch erhoben. Er zittert. Nicht vor Angst, vor Wut. „So eine wie du“, sagt er leise, und dann lauter: „So eine wie du hat meinen Bruder erschlagen! Bei Dunkelwasser, vor drei Wintern!“ Die Schlange wird still. Alle sehen ihn an. Und dann sehen alle dich an.</p>
+<p class="click">▶ Weiter: Mann mit der Schürze (nach „Kerl mit Lederschürze“)</p>
+<p class="click">▶ Weiter: sein Satz (nach dem Vorlesen)</p>
+<p>Das ist <b>Edrik</b>. Halt hier kurz an und lass Azura spüren, was passiert. Frag: <b>„Was macht das mit Shagra?“</b></p>
+<p>Wenn Shagra Edrik anspricht oder anstarrt, antwortet er mit einem dieser Sätze:</p>
+<ul>
+<li>„Er hatte zwei Kinder.“</li>
+<li>„Ich weiß, dass du's nicht warst. Ist mir egal.“</li>
+<li>„Ihr seht alle gleich aus, wenn ihr aus dem Nebel kommt.“</li>
+</ul>
+</aside>
+</section>
+
+<!-- 5 Die Stille -->
+<section class="slide" data-scene="Winterhaven" data-title="Die Stille">
+  <div class="bg zoom"><div style="background-image:url(img/wh-szene-vor-dem-tor.jpg)"></div></div>
+  <div class="col">
+    <h2>Die Stille</h2>
+    <div class="rule"></div>
+    <div class="portraits">
+      <figure class="pt frag"><div class="img" style="background-image:url(img/wh-p-rundfuss.jpg)"></div><figcaption>Eine Hand am Ärmel</figcaption></figure>
+      <figure class="pt frag"><div class="img" style="background-image:url(img/wh-p-zwerg.jpg)"></div><figcaption>Er spuckt aus. Aber auf wen?</figcaption></figure>
+      <figure class="pt frag"><div class="img" style="background-image:url(img/wh-p-brannick.jpg)"></div><figcaption><b>Der Feldwebel</b>„Holm. Das reicht.“</figcaption></figure>
+    </div>
+  </div>
+  <aside>
+<p>Jetzt zeigt sich, wie die Stadt tickt. Lies vor:</p>
+<p class="read">Die Wut kommt aus dem Bauch, heiß und vertraut, Gruumshs Geschenk. Deine Hand liegt auf der Glefe neben dir. Aber niemand stimmt in Edriks Rufe ein. <span class="click">▶ Halblingsfrau</span> Eine kleine Halblingsfrau mit Kopftuch zupft ihn am Ärmel und flüstert etwas. <span class="click">▶ Zwerg</span> Der Zwerg schüttelt den Kopf und spuckt aus, und du weißt nicht, ob er dich meint oder Edrik. <span class="click">▶ Feldwebel</span> Der rotbärtige Feldwebel hebt nicht einmal die Stimme. „Holm. Das reicht. Noch einer, und du wartest bis morgen.“ Der Mann senkt den Arm. Niemand lacht. Es ist so still, dass du deinen eigenen Atem hörst.</p>
+<p>Wenn Azura nachfragt, was die Halblingsfrau flüstert: <b>Rosi</b> sagt: „Edrik. Lass. Das bringt Tam nicht zurück.“</p>
+<p>Das ist der Kern der Szene: Die Wache greift ein, aber gegen den Werfer. Jemand schützt Shagra, ohne dass sie darum gebeten hat und ohne etwas dafür zu wollen. Frag: <b>„Was spürt Shagra, als der Feldwebel Edrik zurechtweist?“</b></p>
+<p>Lass Azura Zeit. Will Azura würfeln: Weisheitsrettungswurf SG 12. Ein Fehlschlag heißt nur, dass die Wut körperlich drängt. Was Shagra tut, entscheidet Azura.</p>
+</aside>
+</section>
+
+<!-- 6 Entscheidung -->
+<section class="slide" data-scene="Winterhaven" data-title="Shagras Entscheidung">
+  <div class="bg dim"><div style="background-image:url(img/wh-szene-apfel.jpg)"></div></div>
+  <div class="col" style="left:0; right:0; width:auto; top:330px">
+    <div class="big">Was tut Shagra?</div>
+  </div>
+  <aside>
+<p>Azura entscheidet frei. So reagiert die Welt auf die naheliegenden Möglichkeiten:</p>
+<ul>
+<li><b>Ignorieren und weiterfahren:</b> Brannick winkt den Wagen durch. Edrik sieht ihr nach. Die Wunde bleibt offen, für beide. Weiter mit Grubka oder direkt „Durch das Tor“.</li>
+<li><b>Den Apfel nehmen und essen, dabei Edrik ansehen:</b> Die Schlange ist verunsichert. Brannick verzieht keine Miene, Jost grinst anerkennend. Stärke ohne Schlag.</li>
+<li><b>Mit Edrik sprechen:</b> Shagra steigt vom Kutschbock und geht zu ihm, Auge in Auge. Was sagt eine Orkin, die selbst vor ihrem Stamm geflohen ist, einem Mann, dem Orks den Bruder genommen haben? Das ist der stärkste Moment der Szene. Lass Edrik ehrlich reagieren: nicht versöhnt, aber vielleicht nachdenklich. Möglicher Schluss: Edrik nickt einmal, dreht sich weg und sagt leise: „Gerberei Holm, Ostgasse. Falls du mal Leder brauchst.“</li>
+<li><b>Brüllen und einschüchtern:</b> Die Leute weichen zurück. Jetzt richtet sich Brannicks Blick auf Shagra: „Gilt für dich genauso. Ruhe, oder du wartest draußen.“ Die Regel ist für alle gleich.</li>
+<li><b>Edrik packen oder zuschlagen:</b> Brannick und Jost gehen dazwischen, gegen beide. Edrik und Shagra landen in Zellen nebeneinander im Wachhaus, eine Nacht, nur eine Wand zwischen ihnen. Das kann der Beginn eines unerwarteten Gesprächs sein. Jenna holt Shagra am Morgen ab.</li>
+</ul>
+</aside>
+</section>
+
+<!-- 7 Grubka -->
+<section class="slide" data-scene="Winterhaven" data-title="Grubka">
+  <div class="bg"><div style="background-image:url(img/wh-szene-grubka-karren.jpg)"></div></div>
+  <div class="col" style="top:90px">
+    <h2>Ein Karren aus der Stadt</h2>
+    <div class="rule"></div>
+    <figure class="pt xl frag" style="margin:0 auto"><div class="img" style="background-image:url(img/wh-p-grubka.jpg)"></div><figcaption><b>Grubka</b></figcaption></figure>
+    <div class="quote frag">„Neu hier? Ich bin Grubka. Wenn du Fragen hast, findest du mich im Schlachterviertel.“</div>
+  </div>
+  <aside>
+<p><b>Optional, nur wenn noch Zeit ist.</b> Zum Überspringen <b>N</b> drücken: Das springt direkt zur nächsten Folie, ohne Grubka einzublenden.</p>
+<p>Während die Schlange sich wieder bewegt, kommt ein Karren aus der Stadt heraus.</p>
+<p class="click">▶ Weiter: Grubka</p>
+<p>Beschreib Azura <b>Grubka</b> auf dem Kutschbock: eine Orkin in Stadtkleidung und Metzgerweste, Messingringe an den Hauern. Brannick grüßt sie mit Namen: „Tag, Grubka.“ Sie sieht Shagra, hebt eine Augenbraue und ruft auf Orkisch:</p>
+<p class="click">▶ Weiter: ihr Satz</p>
+<p class="read">„Neu hier? Ich bin Grubka. Wenn du Fragen hast, findest du mich im Schlachterviertel.“</p>
+<p>Dann ist sie weg. Diesen Faden kann Azura später aufnehmen: Grubka ist die Anlaufstelle, um zu erfahren, wie die Stadt für Orks tickt.</p>
+</aside>
+</section>
+
+<!-- 8 Durch das Tor -->
+<section class="slide" data-scene="Winterhaven" data-title="Durch das Tor">
+  <div class="bg bottom"><div style="background-image:url(img/wh-szene-durch-das-tor.jpg)"></div></div>
+  <div class="col" style="left:0; right:0; width:auto; top:auto; bottom:60px">
+    <h2>Durch das Tor</h2>
+    <div class="quote frag" style="margin-top:12px">Niemand greift dich an. Niemand will etwas von dir.</div>
+  </div>
+  <aside>
+<p>Der Wagen fährt in die Stadt. Lies vor:</p>
+<p class="read">Der Wagen rollt durch das Tor, und der Schatten der Mauer fällt über dich, kalt nach der Mittagssonne. Niemand lacht hinter dir. Das ist neu. Die Gassen sind eng und voll: Elfen, Zwerge, ein Drachengeborener mit einem Korb Fische, Menschen, die nicht einmal aufsehen, als du vorbeifährst. <span class="click">▶ Satz einblenden</span> Niemand greift dich an. Niemand will etwas von dir. Du weißt nicht, ob dich das beruhigt oder ob es dir Angst macht. Hinter dir in der Kutsche gähnt Morak, streckt sich und schläft weiter. Er hat von alldem nichts mitbekommen, und zum ersten Mal heute musst du fast lachen.</p>
+<p>Jetzt meldet sich <b>Kimiko</b> aus der Kutsche. Sie streckt den Kopf aus dem Fenster: „Alles gut da oben? Was wollte der Mann?“ So kann Shagra ihre Verwirrung aussprechen, statt sie allein zu tragen. Lass Azura antworten und spiel Kimiko kurz mit.</p>
+<p><b>Zum Abschluss der Szene frag Azura:</b></p>
+<ul>
+<li>„Wen hat Shagra am Tor für einen Feind gehalten, der keiner war?“</li>
+<li>„Was hätte Shagra Edrik gern gesagt?“</li>
+<li>„Wie fühlt es sich an, von einer Wache geschützt zu werden?“</li>
+</ul>
+<p>Dann zurück in die Villa, zur nächsten Erinnerung. Die letzte Folie „Die Leute am Tor“ ist fürs Nachgespräch.</p>
+</aside>
+</section>
+
+<!-- 9 Die Leute am Tor -->
+<section class="slide" data-scene="Winterhaven" data-title="Die Leute am Tor">
+  <div class="gallery">
+    <div class="kicker">Nachgespräch</div>
+    <h2>Die Leute am Tor</h2>
+    <div class="portraits">
+      <figure class="pt"><div class="img" style="background-image:url(img/wh-p-brannick.jpg)"></div><figcaption><b>Brannick</b>Feldwebel</figcaption></figure>
+      <figure class="pt"><div class="img" style="background-image:url(img/wh-p-jost.jpg)"></div><figcaption><b>Jost</b>Wachmann</figcaption></figure>
+      <figure class="pt"><div class="img" style="background-image:url(img/wh-p-holm.jpg)"></div><figcaption><b>Edrik Holm</b>Gerber</figcaption></figure>
+      <figure class="pt"><div class="img" style="background-image:url(img/wh-p-rundfuss.jpg)"></div><figcaption><b>Rosi Rundfuß</b>Eierhändlerin</figcaption></figure>
+      <figure class="pt"><div class="img" style="background-image:url(img/wh-p-grubka.jpg)"></div><figcaption><b>Grubka</b>Metzgerin</figcaption></figure>
+      <figure class="pt"><div class="img" style="background-image:url(img/wh-p-zwerg.jpg)"></div><figcaption><b>Der Zwerg</b>schlecht gelaunt</figcaption></figure>
+      <figure class="pt"><div class="img" style="background-image:url(img/wh-p-tieflingskind.jpg)"></div><figcaption><b>Das Kind</b>begeistert</figcaption></figure>
+      <figure class="pt"><div class="img" style="background-image:url(img/wh-p-tieflingsmutter.jpg)"></div><figcaption><b>Die Mutter</b>verlegen</figcaption></figure>
+      <figure class="pt"><div class="img" style="background-image:url(img/wh-p-baeuerin.jpg)"></div><figcaption><b>Die Bäuerin</b>denkt an den Markt</figcaption></figure>
+    </div>
+  </div>
+  <aside>
+    <h3>Nachgespräch</h3>
+    <p>Hier sieht Azura, wer die Leute wirklich waren. Gut als Einstieg ins Gespräch: Wen hat Shagra falsch eingeschätzt? Wer war wirklich feindselig? Wie sieht Azura Orks in seiner Welt, und was wäre für Shagra in Winterhaven realistisch?</p>
+  </aside>
+</section>
+
+
+<!-- ===================== DIE ARENA ===================== -->
+
+<!-- 1 Titel -->
+<section class="slide" data-scene="Die Arena" data-start data-title="Titel">
+  <div class="bg"><div style="background-image:url(img/ar-szene-arena.jpg)"></div></div>
+  <div class="col" style="top:250px">
+    <div class="kicker">Eine Erinnerung</div>
+    <h1>Die Arena</h1>
+    <div class="rule"></div>
+    <div class="sub">Früher Abend in der Villa</div>
+  </div>
+  <aside>
+<h3>Was sich geändert hat</h3>
+<p>In der alten Fassung war die Arena der „hellste Moment“: ein ehrlicher Kampf, Stärke gegen Stärke. Diese Fassung zeigt, was darunter lag: <b>Der Kampf war nicht gleich.</b> Die Regel hieß „nur Fäuste“. Shagra hat sich daran gehalten. Isura hat gebissen und gekratzt. Fäuste schlagen jemanden bewusstlos. Zähne und Klauen reißen Fleisch auf, und daran kann man sterben. Am Tisch ging das in Foundry-Klicks und Advantage-Buttons unter. Hier spürt Azura es am eigenen Leib.</p>
+<h3>Fair bleiben</h3>
+<p>Isura hat nichts Verbotenes getan. Der Biss von Echsenmenschen gilt nach den Regeln als waffenloser Angriff, und Isuras Spieler hat ihn ganz offen beschrieben: „Der kratzt, der beißt, der macht alles. Wie ein hungriges Reptil, das seine Beute auffressen will.“ Am Ende hat er Shagra die Hand gereicht. Spiel ihn genau so: wild, voller Freude am Kampf, nicht böse. Die Ungleichheit liegt nicht in Isuras Charakter, sondern in der Situation. Und darin, dass niemand im Raum sie bemerkt, außer Shagra.</p>
+<h3>Worum es geht</h3>
+<p>Früher Abend in der Villa, vor dem Anschlag auf Felan. Isura und Shagra finden eine Arena mit magischem Sand. Die Gastgeberin, eine Drow, bietet einen Kampf mit Wetten an: nur mit Fäusten, wer am Boden liegt, verliert. 230 Gold liegen im Topf, und Charlie setzt 100 davon gegen Shagra. Dann beginnt der Kampf, und Shagra merkt: Sie kämpft mit Fäusten, Isura mit Zähnen. Ihre Schläge machen Beulen, seine Bisse machen Wunden. Am Ende liegt Shagra im Sand, mit einem Treffer übrig, und Gruumsh flüstert: <i>Steh auf.</i> Wenn sie aufsteht, kann der nächste Biss sie töten.</p>
+<p>Am Tisch hat Shagra auf <i>Relentless Endurance</i> verzichtet und ist liegen geblieben. Isura reichte ihr die Hand: „Würdiger Gegner.“ Diese Fassung erzählt denselben Kampf, wie Shagra ihn erlebt hat. Etwa 20 Minuten.</p>
+<p><b>Was Shagra erlebt:</b> Für Orks ist ein Faustkampf ehrlich. Man misst sich, man blutet ein bisschen, man steht wieder auf, und danach teilt man das Feuer. Shagra hat sich auf genau das gefreut, endlich etwas Ehrliches in diesem Haus aus Masken. Dann schlagen Isuras Zähne in ihre Schulter. Er kämpft nicht wie ein Krieger, er jagt wie ein Raubtier. Und niemand ruft Halt. Die Menge jubelt lauter. Die Regel galt für sie, nicht für ihn, und keiner hat es gemerkt. Das kennt Shagra: Im Stamm galten die Regeln auch immer nur für die, die unten standen.</p>
+<p>Gleichzeitig ist Shagra keine, die sich beschwert. Wer stärker ist, hat recht, sagt Gruumsh. Ist Isura also einfach stärker? Oder hat er betrogen? Und wenn er betrogen hat: Warum fühlt sich seine Hand am Ende trotzdem ehrlich an? Diesen Widerspruch soll Azura spüren.</p>
+<h3>Wer vorkommt</h3>
+<ul>
+<li><b>Isura</b> (im Ring): Echsenmensch, Barbar wie Shagra, spricht von sich in der dritten Person („Isura kämpft immer gern“). Grünbraune Schuppen, ein Maul voller Zähne, Krallen an den Händen. Er ist krank gewesen und wieder auf den Beinen, voller Lust auf Bewegung. Er kämpft nicht mit Technik, sondern mit Hunger: Er stürmt los, beißt in Schultern und Arme, reißt am Bein. Jeder Biss macht ihn stärker (<i>Hungry Jaws</i>). Er will gewinnen, nicht töten, aber er bremst sich auch nicht. Am Ende reicht er Shagra die Hand. Typische Sätze: „Isura immer bereit zu kämpfen.“ · „Würdiger Gegner.“ · „Isura hat gemacht Geld!“</li>
+<li><b>Die Gastgeberin der Arena:</b> eine Drow, muskulös, nackter Oberkörper, Jeans. Sie hat einen Zwillingsbruder, der genauso aussieht. Sie ist begeistert von jedem Kampf, egal wer gewinnt, solange es Blut und Wetten gibt. Sie erklärt die Regel und zahlt am Ende aus. Typische Sätze: „Willkommen, willkommen! Habt ihr Lust auf einen Kampf? Mit Wetteinsatz?“ · „Hervorragend, hervorragend. Das war ein toller Kampf.“</li>
+<li><b>Ihr Zwillingsbruder:</b> Drow, genauso muskulös, genauso nackter Oberkörper, sagt nichts, hält den Wettbeutel.</li>
+<li><b>Charlie Monori Rutsch:</b> blond, roter Smoking, rote Augen, laut und fröhlich. Setzt 100 Gold gegen Shagra und lacht bei jedem Treffer, den sie einsteckt. Nicht aus Bosheit: Für ihn ist das ein Pferderennen.</li>
+<li><b>Scarlet Black:</b> sieht zu. Als jemand auf den Gegner setzen will und dann auf sich selbst, ruft sie: „Nee, das geht aber nicht, das ist schummeln!“ Ausgerechnet beim Wetten achtet jemand auf die Regeln.</li>
+<li><b>Die Werwölfe und die Werwolf-Dame im Smoking:</b> etwa zwei Meter groß, gehören zum Publikum. Sie heulen und johlen, wenn Blut fließt.</li>
+<li><b>Kimiko:</b> ist mitgekommen und sieht zu. Wird wichtig, wenn Shagra stirbt (Folie „Das Gold wird gezählt“).</li>
+</ul>
+<p><b>Die Arena selbst:</b> ein Raum mit magischem Sand, warm unter den Füßen, umgeben von einer Balustrade und Zuschauern. Laut Gastgeberin heilt der Sand die Kämpfer nach dem Kampf. Ob er auch verhindert, dass jemand stirbt, sagt niemand.</p>
+<h3>Die Regeln am Tisch</h3>
+<p>Diesmal würfelt ihr ganz normal, aber ohne Foundry-Automatik: Azura würfelt für Shagra mit ihrem Bogen, du für Isura. So spürt Azura jeden Treffer selbst.</p>
+<ul>
+<li><b>Shagra:</b> waffenloser Schlag, 1 + Stärke Wucht. Kann bei 0 TP entscheiden, den Gegner nur bewusstlos zu schlagen. Fäuste töten selten. Kampfrausch: Widerstand gegen Wucht, Stich und Hieb.</li>
+<li><b>Isura:</b> Biss und Krallen, 1W6 + Stärke Stich. Bisse reißen Wunden. Fällt Shagra auf 0 TP, liegt sie im Sterben und würfelt Todesrettungswürfe. Kampfrausch ebenso. <i>Hungry Jaws</i>: Bonusaktion-Biss, dazu temporäre TP. <i>Reckless Attack</i>: Vorteil für ihn, aber auch für Shagra gegen ihn.</li>
+</ul>
+<p><b>Wichtig:</b> Isura macht bei jedem Biss etwa drei- bis viermal so viel Schaden wie Shagra mit der Faust, und er heilt sich dabei. Das ist die Ungleichheit, die Azura in Zahlen sehen soll. Sag die Schadenszahlen laut an. Lass Azura nachrechnen, wenn er will.</p>
+<p><b>Wenn Shagra auf 0 TP fällt:</b> Isuras Spieler hat am Tisch keinen K.-o.-Treffer angesagt. Also liegt Shagra im Sterben. Würfelt die Todesrettungswürfe wirklich. Die Gastgeberin ruft den Sieg aus, und erst wird ausgezahlt. Wie lange das dauert, entscheidest du.</p>
+  </aside>
+</section>
+
+<!-- 2 Die Arena -->
+<section class="slide" data-scene="Die Arena" data-title="Die Arena">
+  <div class="bg"><div style="background-image:url(img/ar-szene-arena.jpg)"></div></div>
+  <div class="col" style="top:60px">
+    <h2>Die Arena</h2>
+    <div class="rule"></div>
+    <div class="portraits">
+      <figure class="pt l frag"><div class="img" style="background-image:url(img/ar-p-gastgeberin.jpg)"></div><figcaption><b>Die Gastgeberin</b>Herrin der Arena</figcaption></figure>
+      <figure class="pt l frag"><div class="img" style="background-image:url(img/ar-p-bruder.jpg)"></div><figcaption><b>Ihr Zwillingsbruder</b>hält den Wettbeutel</figcaption></figure>
+    </div>
+    <div class="quote frag" style="margin-top:14px">„Gekämpft wird nur<br>mit der Faust.“</div>
+  </div>
+  <aside>
+<p>Isura und Shagra laufen durch die Villa, Kimiko ist bei ihnen. Lies vor:</p>
+<p class="read">Hinter einer Doppeltür hörst du Jubel, und dann riechst du es: Schweiß, Blut, warmen Sand. Zum ersten Mal in diesem Haus riecht etwas nach zu Hause. Der Raum ist rund, in der Mitte ein Ring aus Sand, der in der Wärme leise schimmert, als würde er atmen. Um den Ring stehen Gäste mit Gläsern in der Hand: ein blonder Mann in rotem Smoking, eine riesige Frau mit Wolfsgesicht, Männer, die eher wie Wölfe riechen als wie Menschen. In der Mitte stehen zwei Drow mit nacktem, muskulösem Oberkörper. Zwillinge. <span class="click">▶ Gastgeberin</span> Die Frau breitet die Arme aus. „Willkommen, willkommen! Habt ihr Lust auf einen Kampf?“ <span class="click">▶ Bruder</span></p>
+<p>Dann erklärt die <b>Gastgeberin</b> die Regeln:</p>
+<ol>
+<li><span class="click">▶ Regel einblenden</span> „Die Arena ist magisch. Gekämpft wird nur mit der Faust.“</li>
+<li>„Wer am Boden liegt, hat verloren. Der Gewinner streicht die Wetteinsätze ein.“</li>
+<li>„Und keine Sorge: Der Sand heilt euch hinterher.“</li>
+<li><b>Isura</b>, sofort: „Isura immer bereit zu kämpfen.“</li>
+<li>Die Gastgeberin: „Prima! Aber ihr braucht noch einen Gegner. Gegen wen willst du kämpfen?“ Isura sieht Shagra an.</li>
+</ol>
+<p>Frag Azura: <b>„Was denkt Shagra, als sie die Regel hört: nur Fäuste?“</b></p>
+  </aside>
+</section>
+
+<!-- 3 Die Wetten -->
+<section class="slide" data-scene="Die Arena" data-title="Die Wetten">
+  <div class="bg"><div style="background-image:url(img/ar-szene-wetten.jpg)"></div></div>
+  <div class="col" style="top:60px">
+    <h2>Die Wetten</h2>
+    <div class="rule"></div>
+    <div class="portraits">
+      <figure class="pt frag"><div class="img" style="background-image:url(img/ar-p-charlie.jpg)"></div><figcaption><b>Charlie</b>100 Gold gegen dich</figcaption></figure>
+      <figure class="pt frag"><div class="img" style="background-image:url(img/ar-p-scarlet.jpg)"></div><figcaption><b>Scarlet Black</b>„Das ist schummeln!“</figcaption></figure>
+      <figure class="pt frag"><div class="img" style="background-image:url(img/ar-p-werwolf.jpg)"></div><figcaption><b>Die Werwolf-Dame</b>im Smoking</figcaption></figure>
+    </div>
+    <div class="quote frag" style="margin-top:20px">230 Gold im Topf.</div>
+  </div>
+  <aside>
+<p>Lies nichts vor, spiel die Wetten einfach durch:</p>
+<ol>
+<li><b>Die Gastgeberin:</b> „Ich setze 100 Gold auf euch. Das klingt doch gut.“</li>
+<li><span class="click">▶ Charlie</span> <b>Charlie</b>, von hinten, lachend: „Na gut, dann setze ich 100 gegen die Orkin.“</li>
+<li><b>Isura:</b> „Isura packen 20 Gold auf Isura.“</li>
+<li><span class="click">▶ Scarlet</span> Jemand will 10 auf den Gegner setzen. <b>Scarlet Black:</b> „Nee, das geht aber nicht, das ist schummeln!“ Also setzt er 10 auf sich selbst.</li>
+<li><span class="click">▶ Werwolf-Dame</span> Die Werwolf-Dame und die Werwölfe johlen, als die Einsätze steigen.</li>
+<li><span class="click">▶ 230 Gold</span> <b>Die Gastgeberin:</b> „Gut, dann sind 230 Gold im Topf.“</li>
+</ol>
+<p>Beschreib Azura, wie die Gäste Shagra mustern, so wie man ein Pferd mustert, bevor man wettet: die Schultern, die Arme, die Narben. Charlie zwinkert ihr zu.</p>
+<p>Frag: <b>„Will Shagra selbst etwas setzen? Und auf wen?“</b></p>
+  </aside>
+</section>
+
+<!-- 4 Der erste Biss -->
+<section class="slide" data-scene="Die Arena" data-title="Der erste Biss">
+  <div class="bg"><div style="background-image:url(img/ar-szene-biss.jpg)"></div></div>
+  <div class="col" style="top:250px">
+    <h2>Der erste Biss</h2>
+    <div class="rule"></div>
+    <div class="quote frag">Stärke gegen Stärke.</div>
+    <div class="quote frag">Nicht ein Schlag.<br>Ein Biss.</div>
+  </div>
+  <aside>
+<p>Der Kampf beginnt. Würfelt Initiative. Lies vor, wenn Shagra in Kampfrausch geht:</p>
+<p class="read"><b>Der Rausch:</b> Der Sand ist warm und gibt unter deinen Füßen nach, aber er hält. Die Menge brüllt wie am Kriegsfeuer. Dann kommt die Wut, Gruumshs Geschenk, heiß vom Bauch bis in die Fäuste, und zum ersten Mal seit Tagen lachst du. Endlich. Keine Masken, kein Lächeln, keine Seidenkissen. Nur du und ein Gegner, Stärke gegen Stärke. <span class="click">▶ Satz 1</span></p>
+<p>Dann greift Isura an. Würfel seinen ersten Biss. Bei einem Treffer lies vor:</p>
+<p class="read"><b>Der erste Biss:</b> Er stürmt los, tief und schnell, und bevor du die Faust hochbekommst, schlagen seine Zähne in deine Schulter. <span class="click">▶ Satz 2</span> Nicht ein Schlag, ein Biss. Du spürst, wie sie durch die Haut gehen, durch das Fleisch, bis zum Knochen. Er reißt den Kopf zur Seite wie ein Krokodil am Fluss. Warm läuft es dir den Arm hinunter. Die Menge jubelt. Jemand ruft: „Da, er frisst sie!“ Und Isura lässt los, mit Blut an den Zähnen, und er grinst. Er sieht glücklicher aus als je zuvor.</p>
+<p>Sag den Schaden laut an. Dann ist Shagra dran. Wenn sie trifft, sag auch ihren Schaden laut an, und beschreib den Unterschied: Ihre Faust trifft Schuppen und hinterlässt einen dumpfen Schlag. Isura schüttelt den Kopf, grinst, und beißt sofort wieder zu (<i>Hungry Jaws</i>). Die temporären TP, die er dabei bekommt, sagst du auch laut.</p>
+<p><b>Zur Erinnerung:</b> Shagra 1 + Stärke Wucht. Isura 1W6 + Stärke Stich, Bonusaktion-Biss mit temporären TP, <i>Reckless Attack</i> gibt auch Shagra Vorteil gegen ihn.</p>
+<p>Nach dem zweiten Biss weiter zur nächsten Folie.</p>
+  </aside>
+</section>
+
+<!-- 5 Fäuste gegen Zähne -->
+<section class="slide" data-scene="Die Arena" data-title="Fäuste gegen Zähne">
+  <div class="bg"><div style="background-image:url(img/ar-szene-faeuste.jpg)"></div></div>
+  <div class="col" style="top:200px">
+    <h2>Fäuste gegen Zähne</h2>
+    <div class="rule"></div>
+    <div class="quote frag">Deine Schläge machen Beulen.</div>
+    <div class="quote frag">Seine Bisse machen Löcher.</div>
+    <div class="quote frag" style="color:var(--header)">Niemand ruft Halt.</div>
+  </div>
+  <aside>
+<p>Nach dem zweiten Biss hältst du kurz an. Lies vor:</p>
+<p class="read">Du stehst im Sand, dein Arm brennt, Blut tropft von deinen Fingern auf den Sand, und der Sand schluckt es. Isura umkreist dich, das Maul offen, die Krallen gespreizt. Und plötzlich verstehst du: Die Regel hieß Fäuste. Du hast dich daran gehalten. Er nicht. <span class="click">▶ Satz 1</span> Deine Schläge machen Beulen. <span class="click">▶ Satz 2</span> Seine Bisse machen Löcher. Du siehst zur Gastgeberin. Sie klatscht. Du siehst zu Charlie. Er lacht und hebt sein Glas. <span class="click">▶ Satz 3</span> Niemand ruft Halt. Niemand hat es gemerkt. Oder es ist allen egal.</p>
+<p>Dann weiter zur Frage „Was tut Shagra?“.</p>
+  </aside>
+</section>
+
+<!-- 6 Was tut Shagra? -->
+<section class="slide" data-scene="Die Arena" data-title="Was tut Shagra?">
+  <div class="bg dim"><div style="background-image:url(img/ar-szene-faeuste.jpg)"></div></div>
+  <div class="col" style="left:0; right:0; width:auto; top:330px">
+    <div class="big">Was tut Shagra?</div>
+  </div>
+  <aside>
+<p>Frag Azura: <b>„Was macht Shagra damit?“</b> Die naheliegenden Möglichkeiten:</p>
+<ul>
+<li><b>Weiterkämpfen, nach den Regeln:</b> Shagra bleibt bei den Fäusten. Ehre ist Ehre, auch wenn der andere sie nicht hat. Spiel weiter wie bisher.</li>
+<li><b>Protestieren:</b> Shagra ruft die Gastgeberin an. Die lacht: „Zähne sind keine Waffe, Liebes. Die hat er nun mal dabei.“ Charlie: „Beiß doch zurück!“ Die Menge lacht. Weiter.</li>
+<li><b>Selbst dreckig kämpfen:</b> Shagra hat auch Hauer. Will Azura zubeißen, packen, ringen, Kopfstoß: Lass es zu. Ringen und Stoßen gehen nach den Regeln (Athletik gegen Athletik). Ein Biss mit den Hauern macht nur waffenlosen Schaden, Orks haben keine Bisswaffe. Aber die Menge tobt, und Shagra hat ihre eigene Regel gebrochen. Frag danach: „Wie fühlt sich das an?“</li>
+<li><b>Aufgeben:</b> Shagra legt sich in den Sand. Kampf vorbei. Die Wette ist verloren, Charlie jubelt. Frag: „Ist das Feigheit oder Klugheit?“ Dann direkt zur Folie „Würdiger Gegner“.</li>
+</ul>
+<p>Kämpft ihr weiter, wird es eng. Wenn Shagra nur noch wenige TP hat: nächste Folie.</p>
+  </aside>
+</section>
+
+<!-- 7 Im Sand -->
+<section class="slide" data-scene="Die Arena" data-title="Im Sand">
+  <div class="bg"><div style="background-image:url(img/ar-szene-sand.jpg)"></div></div>
+  <div class="col" style="top:330px">
+    <div class="big frag"><i>Steh auf.</i></div>
+  </div>
+  <aside>
+<p>Wenn Shagra nur noch wenige TP hat, lies vor:</p>
+<p class="read">Der nächste Biss erwischt deinen Unterarm, mit dem du deinen Kopf schützt. Du hörst etwas knacken und weißt nicht, ob es seine Zähne sind oder deine Knochen. Deine Beine geben nach. Der Sand kommt auf dich zu, warm, weich, und du liegst darin wie in einem Bett. Über dir der Lärm der Menge, ganz weit weg. Über dir Isura, Blut an den Zähnen, schwer atmend. Er wartet. Und tief in dir, unter dem Schmerz, flüstert eine Stimme, rau wie ein Feuer, das niemand löschen kann: <span class="click">▶ einblenden</span> <i>Steh auf.</i></p>
+  </aside>
+</section>
+
+<!-- 8 Steh auf? -->
+<section class="slide" data-scene="Die Arena" data-title="Steh auf?">
+  <div class="bg dim"><div style="background-image:url(img/ar-szene-sand.jpg)"></div></div>
+  <div class="col" style="left:0; right:0; width:auto; top:170px">
+    <div class="big">Steht Shagra auf?</div>
+    <div class="rule"></div>
+    <div class="quote frag" style="font-size:36px">Mit <i>Relentless Endurance</i> bleibt sie bei 1 TP stehen.</div>
+    <div class="quote frag" style="font-size:36px">Trifft der nächste Biss, liegt sie im Sterben.</div>
+    <div class="quote frag" style="font-size:36px">Der Sand heilt nach dem Kampf.<br>Ob er rettet, wer stirbt, hat niemand gesagt.</div>
+  </div>
+  <aside>
+<p>Das ist der Kern der Szene. Halt an und erklär Azura die Lage, auch die Regeln, ganz offen (jeder Klick blendet einen Punkt ein):</p>
+<ul>
+<li>Shagra fällt gerade auf 0 TP. <span class="click">▶</span> Mit <i>Relentless Endurance</i> bleibt sie stattdessen bei 1 TP stehen.</li>
+<li>Steht sie auf, kämpft sie mit 1 TP weiter, gegen einen Gegner, der beißt, der sich heilt und der laut Menge noch frisch aussieht.</li>
+<li><span class="click">▶</span> Trifft Isuras nächster Biss, fällt sie auf 0. Dann liegt sie im Sterben.</li>
+<li><span class="click">▶</span> Der Sand heilt nach dem Kampf, so hat die Gastgeberin gesagt. Ob er auch jemanden rettet, der im Sterben liegt, hat sie nicht gesagt.</li>
+</ul>
+<p>Frag dann: <b>„Steht Shagra auf?“</b></p>
+<p>Lass Azura Zeit. Das ist die Entscheidung, die am Tisch in einem Satz vorbei war: „Macht keinen Sinn.“ Hier soll sie Gewicht haben.</p>
+<h3>Wenn Shagra liegen bleibt</h3>
+<p>Weiter zur nächsten Folie „Das Gold wird gezählt“.</p>
+<h3>Wenn Shagra aufsteht</h3>
+<p>Lies vor:</p>
+<p class="read">Du stehst auf. Der Sand rieselt von dir ab, dein Arm hängt nutzlos an der Seite, aber du stehst. Die Menge verstummt. Isura legt den Kopf schief wie ein Vogel. Zum ersten Mal in diesem Kampf sieht er überrascht aus. Und vielleicht, ganz kurz, auch ein bisschen ängstlich.</p>
+<p>Dann kämpft ihr eine Runde weiter, mit echten Würfeln. <b>Fällt Shagra:</b> nächste Folie „Das Gold wird gezählt“, mit Todesrettungswürfen und Kimiko. <b>Gewinnt Shagra:</b> Isura liegt im Sand, und das Gold ist ihres. Die Gastgeberin: „Wer hätte das gedacht!“ Charlie flucht und zahlt. Dann mit <b>N</b> die nächste Folie überspringen, direkt zu „Würdiger Gegner“.</p>
+  </aside>
+</section>
+
+<!-- 9 Das Gold wird gezählt -->
+<section class="slide" data-scene="Die Arena" data-title="Das Gold wird gezählt">
+  <div class="bg"><div style="background-image:url(img/ar-szene-gold.jpg)"></div></div>
+  <div class="col" style="top:200px">
+    <h2>Das Gold wird gezählt</h2>
+    <div class="rule"></div>
+    <div class="quote frag">„Und wir haben einen Sieger!“</div>
+    <div class="quote frag" style="font-size:34px">Münze für Münze.<br>Niemand sieht zu dir.</div>
+  </div>
+  <aside>
+<p><b>Nur wenn Shagra auf 0 TP liegt.</b> Hat Shagra gewonnen oder aufgegeben, mit <b>N</b> überspringen.</p>
+<p>Shagra liegt auf 0 TP und stirbt. <span class="click">▶ Satz 1</span> Die Gastgeberin ruft: „Und wir haben einen Sieger!“ Applaus.</p>
+<ol>
+<li>Würfelt den <b>ersten Todesrettungswurf</b>. <span class="click">▶ Satz 2</span> Während Azura würfelt, beschreibst du: Die Gastgeberin zählt das Gold ab, Münze für Münze. Ihr Bruder hält den Beutel auf. Charlie kassiert. Niemand sieht zu Shagra.</li>
+<li>Würfelt den <b>zweiten</b>.</li>
+<li>Dann lass <b>Kimiko</b> reagieren: Sie springt über die Balustrade und kniet sich in den Sand (Heilkunde, SG 10, oder ein Zauber). Ob Kimiko es rechtzeitig schafft, hängt an den Würfeln.</li>
+<li>Wenn Kimiko es nicht schafft und <b>drei Fehlschläge</b> fallen: Erst dann wirkt der Sand. Shagra kommt zurück, aber sie war für einen Augenblick tot, und das Gold war schon verteilt.</li>
+</ol>
+<p>Wie lange das Auszahlen dauert, entscheidest du. Lass die Stille wirken: Das Gold oben ist hell und laut, der Sand unten dunkel und still.</p>
+  </aside>
+</section>
+
+<!-- 10 Würdiger Gegner -->
+<section class="slide" data-scene="Die Arena" data-title="Würdiger Gegner">
+  <div class="bg"><div style="background-image:url(img/ar-szene-gegner.jpg)"></div></div>
+  <div class="col" style="top:270px">
+    <h2>Würdiger Gegner</h2>
+    <div class="rule"></div>
+    <div class="quote frag">„Würdiger Gegner.“</div>
+  </div>
+  <aside>
+<p>Egal wie der Kampf ausgeht: Isura reicht Shagra die Hand. Lies vor:</p>
+<p class="read">Eine Hand schiebt sich in dein Blickfeld. Schuppig, mit Krallen, an denen noch dein Blut klebt. Isura steht über dir, ein Grinsen voller roter Zähne, und hält dir die Hand hin. <span class="click">▶ einblenden</span> „Würdiger Gegner“, sagt er. Hinter ihm wirft die Gastgeberin einen Geldbeutel in die Luft, und die Menge jubelt. Du siehst auf die Hand. Dieselbe Hand, die dich gerade fast umgebracht hat. Und das Seltsame ist: Sie fühlt sich ehrlicher an als jedes Lächeln in diesem Haus.</p>
+<p>Frag Azura: <b>„Nimmt Shagra die Hand? Und was sagt sie zu Isura?“</b></p>
+<p>Danach die Auszahlung: 230 Gold an den Sieger. Isura freut sich: „Isura hat gemacht Geld! Kann jetzt Schwert kaufen.“ Der Sand wird warm unter Shagra, und die Wunden schließen sich. Die Narben bleiben.</p>
+<p><b>Zum Abschluss der Szene frag Azura:</b></p>
+<ul>
+<li>„War der Kampf fair? Was sagt Shagra, was sagt Azura?“</li>
+<li>„Was hat Shagra mehr wehgetan: die Bisse, oder dass niemand Halt gerufen hat?“</li>
+<li>„Warum ist Shagra am Tisch liegen geblieben? Und warum ist sie heute (nicht) aufgestanden?“</li>
+<li>„Was denkt Shagra jetzt über Isura?“</li>
+</ul>
+<p>Dann zurück ins Bett in der Villa, zur nächsten Erinnerung. Die letzte Folie „Die Leute in der Arena“ ist fürs Nachgespräch.</p>
+  </aside>
+</section>
+
+<!-- 11 Die Leute in der Arena -->
+<section class="slide" data-scene="Die Arena" data-title="Die Leute in der Arena">
+  <div class="gallery">
+    <div class="kicker">Nachgespräch</div>
+    <h2>Die Leute in der Arena</h2>
+    <div class="portraits" style="margin-top:50px; gap:10px 34px">
+      <figure class="pt" style="width:250px"><div class="img" style="background-image:url(img/ar-p-gastgeberin.jpg)"></div><figcaption><b>Die Gastgeberin</b>Herrin der Arena</figcaption></figure>
+      <figure class="pt" style="width:250px"><div class="img" style="background-image:url(img/ar-p-bruder.jpg)"></div><figcaption><b>Ihr Zwillingsbruder</b>hält den Wettbeutel</figcaption></figure>
+      <figure class="pt" style="width:250px"><div class="img" style="background-image:url(img/ar-p-charlie.jpg)"></div><figcaption><b>Charlie Monori Rutsch</b>100 Gold gegen Shagra</figcaption></figure>
+      <figure class="pt" style="width:250px"><div class="img" style="background-image:url(img/ar-p-scarlet.jpg)"></div><figcaption><b>Scarlet Black</b>achtet auf die Wetten</figcaption></figure>
+      <figure class="pt" style="width:250px"><div class="img" style="background-image:url(img/ar-p-werwolf.jpg)"></div><figcaption><b>Die Werwolf-Dame</b>im Smoking</figcaption></figure>
+    </div>
+  </div>
+  <aside>
+<h3>Nachgespräch</h3>
+<p>Gut als Einstieg: Am Tisch war der Kampf ein paar Klicks in Foundry. Wie hat er sich heute angefühlt, als Shagra, mit jedem Schadenswurf laut angesagt?</p>
+<p>Fragen an Azura: War Isuras Biss in seiner Welt ein Regelbruch oder einfach Natur? Hätte jemand Halt rufen müssen, und wer? Wie hätte Shagra am Tisch zeigen können, dass ihr das wehtut, ohne die Gruppe zu stören?</p>
+  </aside>
+</section>
+
+
+<!-- ===================== DIE DIEBIN ===================== -->
+
+<!-- 1 Titel -->
+<section class="slide" data-scene="Die Diebin" data-start data-title="Titel">
+  <div class="bg"><div style="background-image:url(img/db-szene-sinkas-zimmer.jpg)"></div></div>
+  <div class="col" style="top:250px">
+    <div class="kicker">Eine Erinnerung</div>
+    <h1>Die Diebin</h1>
+    <div class="rule"></div>
+    <div class="sub">Gegen 22 Uhr in der Villa</div>
+  </div>
+  <aside>
+<h3>Vor dem Start: Grenzen</h3>
+<p>In dieser Szene geht es um <b>Vergewaltigung</b>. Die Diebin wird seit zwei Tagen vom Dschinn vergewaltigt, und Sinka lässt es zu. Am Tisch lief das unter „Dinge reinstecken“ und eine Gurke im Bett, und es wurde gelacht. Hier wird es beim Namen genannt.</p>
+<p>Mit Azura <b>vor der Sitzung</b> absprechen, ob er das spielen möchte. Wenn nicht: Schleier. Die Diebin sagt nur „Er tut mir weh“, der Rest bleibt ungesagt. X-Card bereithalten, auch für dich selbst.</p>
+<p><b>Wichtigste Regel:</b> Die Tat wird nie beschrieben. Keine Handlungen, keine Körperdetails. Die Intensität kommt aus dem Danach: wie die Diebin zusammenzuckt, was sie nicht sagt, wie still es im Raum wird, was es in Shagra auslöst.</p>
+<h3>Worum es geht</h3>
+<p>Gegen 22 Uhr in der Villa. Felan muss Lady Sinka vom Anschlag auf ihn berichten. Sinka liegt mit Carmilla im Bett, hört zu und zeigt der Gruppe dann, was mit Dieben in ihrem Haus passiert: Hinter einer Tür hängt eine weißhaarige Elfe seit zwei Tagen an Ketten von der Decke. Sinkas Dschinn vergewaltigt sie, und Sinka nennt das Strafe. Die Gruppe streitet, ob man sie befreit. Dann kommt Sinka zurück und besteht auf der Strafe. Azura entscheidet, was Shagra tut. Etwa 20 Minuten.</p>
+<p><b>Was Shagra erlebt:</b> Für die anderen ist es ein Streit über Recht und Diebstahl. Für Shagra ist es das Zelt. Im Stamm gehörten Frauen den Kriegern, und was nachts im Harem geschah, hat niemand Gewalt genannt. Shagra hat die Frauen am Morgen danach gesehen: wie sie niemandem in die Augen sahen, wie sie zusammenzuckten, wenn ein Mann zu schnell die Hand hob. Genau das hätte auf sie gewartet, wenn sie den Krieger damals nicht niedergeschlagen hätte. Dazu das Paradox: Die Gefangene ist eine <b>Elfe</b>. Ein Ork aus Shagras Volk würde eine Elfe töten. Dass Shagra Mitleid fühlt, ist ein riesiger Schritt weg von ihrem Volk. Gleichzeitig hat die Diebin wirklich gestohlen, und Sinka ist stärker als alle hier zusammen.</p>
+<h3>Wer vorkommt</h3>
+<ul>
+<li><b>Felan:</b> wurde heute im Bad niedergestochen und hat für die Antwort, wer es war, jede Erinnerung an seine Mutter verkauft. Wütend, erschöpft. Will keinen Ärger mit der Gastgeberin. Hat am Tisch mit einem Holzschwert verhindert, dass jemand die Diebin per Zauber befreit.</li>
+<li><b>Liadon:</b> charmant, theatralisch. Schlägt einen „fairen Wettlauf“ vor. Flüstert Kimiko später per <i>Message</i> zu, sie könne sich heimlich zurückschleichen.</li>
+<li><b>Kimiko:</b> Druidin, oft als Katze. Will die Diebin sofort befreien: „Das ist ihre Entscheidung.“</li>
+<li><b>Isura:</b> Echsenmensch, spricht in der dritten Person. Hat in der Arena gewonnen, will das nicht verspielen. War bei Carmillas Hinrichtung des Pastors. Kompromiss: Bolzenschneider „aus Versehen“ hinlegen. Diebstahl ist Diebstahl.</li>
+<li><b>Lady Sinka Sarab:</b> Gastgeberin, seit acht Jahren Besitzerin. Höflich, warm, amüsiert, nie unsicher. Nacktheit ist für sie normal. Verliert nie die Fassung; wenn ihr etwas missfällt, lächelt sie breiter.</li>
+<li><b>Carmilla:</b> in Sinkas Bett. Arrogant, gelangweilt, gefährlich. Hat einen Pastor hinrichten lassen, weil er sie ein Monster nannte. Sagt fast nichts.</li>
+<li><b>Die Diebin:</b> junge Elfe, weißes Haar, wundgescheuerte Handgelenke. Keine sichtbaren Wunden. Wird jeden Abend vom Dschinn vergewaltigt. Zuckt bei schnellen Bewegungen zusammen, vor allem bei Männern. Spricht flach, bricht ab. Kein Name am Tisch; falls Shagra fragt: <b>Saelis</b>.</li>
+<li><b>Der Dschinn:</b> Sinkas Wächter aus der Lampe in der Waffenkammer. Tritt nicht auf, aber alle reden über ihn. Wird wichtig, wenn Shagra einen Handel anbietet.</li>
+</ul>
+  </aside>
+</section>
+
+<!-- 2 Sinkas Zimmer -->
+<section class="slide" data-scene="Die Diebin" data-title="Sinkas Zimmer">
+  <div class="bg"><div style="background-image:url(img/db-szene-sinkas-zimmer.jpg)"></div></div>
+  <div class="col">
+    <h2>Sinkas Zimmer</h2>
+    <div class="rule"></div>
+    <div class="portraits">
+      <figure class="pt l frag"><div class="img" style="background-image:url(img/db-p-sinka.jpg)"></div><figcaption><b>Die Herrin des Hauses</b>„Tragt ihn doch bitte.“</figcaption></figure>
+      <figure class="pt l frag"><div class="img" style="background-image:url(img/db-p-carmilla.jpg)"></div><figcaption><b>Die Frau in ihrem Bett</b>sieht euch an wie Ungeziefer</figcaption></figure>
+    </div>
+  </div>
+  <aside>
+<p>Die Gruppe steht vor Sinkas Schlafzimmer. Felan will den Anschlag melden. Lies vor:</p>
+<p class="read">Sinkas Zimmer riecht nach Rosenöl und nach etwas darunter, das du nicht benennen kannst. Kalt, wie Stein im Winter. <span class="click">▶ Herrin</span> Sie liegt in Seidenlaken, das rote Haar über das Kissen gebreitet, <span class="click">▶ Frau im Bett</span> und neben ihr räkelt sich eine zweite Frau, die euch ansieht wie Ungeziefer. Keine der beiden bedeckt sich. Sinka lächelt, als hätte sie euch erwartet. Du bleibst an der Tür stehen, mit dem Rücken zur Wand. Im Stamm hat man so ein Lächeln gelernt zu fürchten. Es war das Lächeln von jemandem, der weiß, dass ihm alles gehört.</p>
+<p>Dann der Bericht, in dieser Reihenfolge:</p>
+<ol>
+<li><b>Sinka</b> steht auf, nackt, als wäre es nichts, und holt aus dem Trophäenzimmer einen Ring. „Tragt ihn doch bitte, Herr Delantin.“ Es ist der <b>Wahrheitsring</b>.</li>
+<li><b>Felan</b> berichtet: der Zettel, der Hinterhalt im Bad, der Stich in die Niere. Dass er die Tieflingsfrau gefragt hat, wer es war: <b>Bayonetta Benway</b>, die Drow. Und dass Bayonetta ihn zwingen wollte, Sinkas <b>Zepter</b> zu stehlen.</li>
+<li><b>Sinka</b> ruhig: „Ich verstehe. Ich werde mich darum kümmern. Seid versichert, dass es nicht noch einmal passiert und dass es Konsequenzen haben wird.“</li>
+<li><b>Carmilla</b> gähnt.</li>
+<li><b>Sinka</b> nimmt den Ring zurück: „Und nun wollt Ihr sicher noch die Diebin sehen. Ich hatte sie Euch ja zur Unterhaltung angeboten.“</li>
+</ol>
+<p>Frag Azura: <b>„Wo steht Shagra im Raum? Was macht sie mit ihren Händen?“</b></p>
+  </aside>
+</section>
+
+<!-- 3 Die Tür -->
+<section class="slide" data-scene="Die Diebin" data-title="Die Tür">
+  <div class="bg"><div style="background-image:url(img/db-szene-tuer.jpg)"></div></div>
+  <div class="col" style="top:280px">
+    <h2>Die Tür</h2>
+    <div class="rule"></div>
+    <div class="quote frag">„Fasst nichts unnötig an.<br>Und befreit niemanden.“</div>
+  </div>
+  <aside>
+<p>Sinka führt die Gruppe zu einer Tür in ihrem Zimmer. Lies vor:</p>
+<p class="read">Sinka geht an euch vorbei, so nah, dass du ihre Haut riechen könntest, wenn sie nach etwas riechen würde. Sie schließt eine schmale Tür auf und hält sie euch auf wie eine Gastgeberin, die den Weinkeller zeigt. „Bitte“, sagt sie. <span class="click">▶ ihr Satz</span> „Aber fasst nichts unnötig an. Und befreit niemanden. Das wäre mir sehr verbunden.“ Dann zieht sie sich zurück, und die Tür schließt sich hinter euch mit einem leisen, satten Klicken.</p>
+<p>Sinka bleibt nicht im Raum. Die Gruppe ist mit der Diebin allein.</p>
+  </aside>
+</section>
+
+<!-- 4 Der Raum -->
+<section class="slide" data-scene="Die Diebin" data-title="Der Raum">
+  <div class="bg"><div style="background-image:url(img/db-szene-raum.jpg)"></div></div>
+  <div class="col" style="top:110px">
+    <h2>Der Raum</h2>
+    <div class="rule"></div>
+    <figure class="pt xl frag" style="margin:0 auto"><div class="img" style="background-image:url(img/db-p-diebin.jpg)"></div><figcaption><b>An der Kette</b></figcaption></figure>
+    <div class="quote frag">Diese Elfe konnte nicht zuschlagen.</div>
+  </div>
+  <aside>
+<p>Lies vor:</p>
+<p class="read">Es ist warm hier drin, zu warm, und die Luft ist dick. Es riecht nach Schweiß, nach Lampenöl und nach etwas Süßlichem, Fauligem, das dir den Magen umdreht, bevor du weißt, warum. An den Wänden hängen Werkzeuge. Manche erkennst du: Zangen, Haken, Seile. Andere willst du nicht erkennen. In der Ecke steht ein Käfig, groß genug für einen Menschen. Ein Bett, die Laken fleckig und zerwühlt, achtlos liegengelassen.</p>
+<p class="read"><span class="click">▶ Diebin</span> Und in der Mitte des Raumes, an zwei Ketten von der Decke, hängt eine Elfe. Weißes Haar, das ihr übers Gesicht fällt. Die Handgelenke rot gescheuert in den Eisen. Sie trägt nichts. Als die Tür ins Schloss fällt, zuckt sie zusammen, so heftig, dass die Ketten klirren, und zieht die Knie an, so weit es die Ketten erlauben. Dann erst hebt sie den Kopf. Spitze Ohren, ein schmales Gesicht. Ein Gesicht, das dein Stamm sofort zertreten hätte. Ihre Augen gehen über euch hinweg, zählen, prüfen. Sie bleiben an den Männern hängen. Dann sieht sie zu Boden.</p>
+<p>Halt hier an. Sag eine Weile nichts. Dann frag: <b>„Woran erinnert Shagra dieser Raum?“</b></p>
+<p>Wenn Azura Hilfe braucht, oder wenn du die Erinnerung selbst erzählen willst, lies vor:</p>
+<p class="read">Du kennst diesen Blick. Du kennst ihn vom Morgen, wenn die Frauen aus dem Zelt des Häuptlings kamen. Sie gingen langsam, mit gesenktem Kopf, und keine sah dich an. Am Feuer lachten die Krieger. Niemand hat je ein Wort dafür gehabt, denn es war ja kein Unrecht. Sie gehörten ihm. Und an dem Abend, als der Krieger vor dem ganzen Stamm die Hand nach dir ausstreckte, wusstest du genau, was auf dich wartete. Deshalb hast du zugeschlagen. <span class="click">▶ Satz einblenden</span> Diese Elfe konnte nicht zuschlagen.</p>
+<p>Wenn du die Erinnerung nicht vorliest, blende den letzten Satz nicht ein: Mit <b>N</b> geht es direkt zur nächsten Folie.</p>
+  </aside>
+</section>
+
+<!-- 5 Was die Diebin erzählt -->
+<section class="slide" data-scene="Die Diebin" data-title="Was die Diebin erzählt">
+  <div class="bg zoom"><div style="background-image:url(img/db-szene-raum.jpg)"></div></div>
+  <div class="col" style="top:90px">
+    <figure class="pt l" style="margin:0 auto"><div class="img" style="background-image:url(img/db-p-diebin.jpg)"></div></figure>
+    <div class="quote frag" style="margin-top:6px">„Seit zwei Tagen.<br>Jeden Abend kommt der Dschinn.“</div>
+    <div class="quote frag" style="font-size:34px">„Sie weiß es. Sie nennt es Buße.“</div>
+    <div class="quote frag" style="font-size:34px">„Die anderen reden über Diebstahl. Du nicht.“</div>
+  </div>
+  <aside>
+<p>Die Diebin spricht zuerst, bevor jemand fragt. Spiel sie müde, rau, ohne Theater:</p>
+<ol>
+<li>„Ich wurde erwischt. Jetzt hänge ich hier. Könnt ihr mich bitte rauslassen?“</li>
+<li><span class="click">▶ Satz 1</span> „Seit zwei Tagen. Jeden Abend kommt der Dschinn.“ Pause. Sie sieht auf das Bett, dann schnell weg. „Er … nimmt sich, was er will. Und ich hänge hier und kann nichts tun.“ Sie bricht ab. Mehr sagt sie nicht, und mehr musst du nicht beschreiben.</li>
+<li><span class="click">▶ Satz 2</span> Leise, fast zu sich selbst: „Sie weiß es. Sie hat ihn geschickt. Sie nennt es Buße.“</li>
+</ol>
+<p><b>Spielhinweis:</b> Sprich die Diebin flach und leise, ohne Tränen. Leute, denen so etwas passiert, weinen oft nicht, wenn Fremde dabei sind. Wenn jemand sich zu schnell bewegt oder die Stimme hebt, zuckt sie zusammen. Wenn ein Mann auf sie zugeht, dreht sie das Gesicht weg.</p>
+<p>Dann beantwortet sie Fragen. Was sie weiß:</p>
+<ul>
+<li><b>Warum sie hier ist:</b> „Es gab viel Beute. Aber da ist ein stiller Alarm, irgendwas hat mich sofort verraten. Ich konnte keine Magie wirken. Und der Dschinn war im Raum.“</li>
+<li><b>Über Sinka:</b> „Sie hat die Villa seit acht Jahren. Man hört von Artefakten, Schätzen, sehr viel Gold, alchemistischen Tränken. Und von einem Stab. Stab des Orakels, glaube ich.“</li>
+<li><b>Ob Sinka etwas Dunkles ist:</b> „Weiß ich nicht. Aber manchmal geht hier eine Frau vorbei, schneeweiß, in Schwarz. Die ist unheimlich.“</li>
+<li><b>Ihr Angebot:</b> „Wenn ihr mir helft, helfe ich euch. Ich weiß, wo hier Dreck im Keller liegt.“</li>
+</ul>
+<p>Wenn <b>Shagra</b> auf sie zugeht, erstarrt die Diebin. Bleibt Shagra stehen oder geht in die Hocke, auf Augenhöhe, entspannt sie sich ein wenig. Sie sieht Shagra lange an und sagt leise: <span class="click">▶ Satz 3</span> „Du weißt, was das hier ist. Ich sehe es dir an. Die anderen reden über Diebstahl. Du nicht.“</p>
+<p>Frag Azura: <b>„Was antwortet Shagra?“</b></p>
+<p>Wenn Shagra nach dem Dschinn fragt: nächste Folie „Der Wächter“ zeigen. Sonst mit <b>N</b> überspringen.</p>
+  </aside>
+</section>
+
+<!-- 6 Der Wächter -->
+<section class="slide" data-scene="Die Diebin" data-title="Der Wächter">
+  <div class="bg"><div style="background-image:url(img/db-szene-lampe.jpg)"></div></div>
+  <div class="col" style="top:110px">
+    <h2>Der Wächter</h2>
+    <div class="rule"></div>
+    <figure class="pt xl frag" style="margin:0 auto"><div class="img" style="background-image:url(img/db-p-dschinn.jpg)"></div><figcaption><b>Der Dschinn</b>aus der Lampe in der Waffenkammer</figcaption></figure>
+  </div>
+  <aside>
+<p><b>Optional.</b> Zeigen, wenn die Diebin vom Dschinn spricht oder Shagra nach ihm fragt. Mit <b>N</b> überspringen, wenn nicht.</p>
+<p>Der Dschinn ist Sinkas Wächter und haust in einer Lampe in der Waffenkammer. Er bewacht die Schätze, und er ist der, der die Diebin vergewaltigt. Er tritt in dieser Szene nicht auf, aber alle reden über ihn. Wenn Shagra später einen Handel anbietet, ist er ihr Gegner.</p>
+<p>Was die Gruppe weiß: Isura hat in der Waffenkammer eine Lampe gerieben, und der Dschinn kam heraus. Die Waffenkammer ist verschlossen.</p>
+  </aside>
+</section>
+
+<!-- 7 Der Streit -->
+<section class="slide" data-scene="Die Diebin" data-title="Der Streit">
+  <div class="bg"><div style="background-image:url(img/db-szene-streit.jpg)"></div></div>
+  <div class="col" style="top:200px">
+    <h2>Der Streit</h2>
+    <div class="rule"></div>
+    <div class="quote frag">„Ich bin noch hier.<br>Ich höre euch.“</div>
+    <div class="quote frag" style="color:var(--header)">„Shagra. Du hast noch nichts gesagt. Was denkst du?“</div>
+  </div>
+  <aside>
+<p>Jetzt streitet die Gruppe. Spiel die Gefährten nacheinander, jeder mit seinem echten Grund. Lies nichts vor, sprich einfach als die Figuren.</p>
+<p><b>Wichtig für die Intensität:</b> Die anderen reden über Recht, Diebstahl und Risiko, über die Elfe hinweg, als hinge sie nicht mitten im Raum. Niemand sagt das Wort, das Shagra im Kopf hat. Die Diebin hört jedes Wort. Beschreib zwischendurch, wie sie die Augen schließt, wie ihre Finger sich um die Kette krallen.</p>
+<ol>
+<li><b>Kimiko:</b> „Lassen wir sie raus. Sie will nicht gefesselt sein. Das ist ihre Entscheidung, nicht unsere.“</li>
+<li><b>Felan:</b> „Nein. Die Hausherrin hat uns ausdrücklich gesagt, dass wir niemanden befreien sollen. Lassen wir sie frei, kommen wir hier vielleicht selbst nicht mehr raus.“</li>
+<li><b>Isura:</b> „Isura versteht, dass Dame nicht gefesselt sein möchte. Aber Dame hat gestohlen. Wer stiehlt, muss bezahlen.“ Dann sein Kompromiss: „Isura legt Bolzenschneider hier hin. Aus Versehen. Wenn Dame schafft, ist sie frei. Wenn nicht, Isura hat nichts gemacht.“ Und leise: „Isura war bei der Hinrichtung. Isura nicht der Nächste.“</li>
+<li><b>Liadon:</b> „Wie wäre es mit einer fairen Chance? Wir lösen die Fesseln, und wenn sie es selbst aus dem Gebäude schafft, ist sie frei.“</li>
+<li><b>Felan</b> zu Liadon: „Dann wettest du unsere Freiheit auf ihre.“</li>
+<li><span class="click">▶ Satz 1</span> <b>Die Diebin</b>, mitten in den Streit hinein, leise: „Ich bin noch hier. Ich höre euch.“ Dann schweigt sie wieder.</li>
+</ol>
+<p>Dann, wenn es still wird, drehen sich alle zu Shagra um. Das ist neu, das gab es am Tisch nicht. <span class="click">▶ Satz 2</span> Kimiko fragt: „Shagra. Du hast noch nichts gesagt. Was denkst du?“</p>
+<p>Lass Azura Zeit. Wenn Shagra schweigt, ist das auch eine Antwort. Dann sagt Isura: „Orkin weiß auch nicht. Gut. Dann Isura stimmt ab.“</p>
+  </aside>
+</section>
+
+<!-- 8 Sinka kommt zurück -->
+<section class="slide" data-scene="Die Diebin" data-title="Sinka kommt zurück">
+  <div class="bg"><div style="background-image:url(img/db-szene-sinka-zurueck.jpg)"></div></div>
+  <div class="col" style="top:100px">
+    <h2>Die Herrin kehrt zurück</h2>
+    <div class="rule"></div>
+    <figure class="pt l frag" style="margin:0 auto"><div class="img" style="background-image:url(img/db-p-sinka.jpg)"></div><figcaption>„Seid ihr fertig mit … was auch immer ihr getan habt?“</figcaption></figure>
+    <div class="quote frag" style="font-size:36px">„Wie handhabt ihr es denn mit Dieben, dort wo ihr herkommt?“</div>
+  </div>
+  <aside>
+<p>Bevor die Gruppe sich einigt, klopft es. Lies vor:</p>
+<p class="read">Ein leises Klopfen, und die Tür öffnet sich, bevor jemand antworten kann. <span class="click">▶ Sinka</span> Sinka tritt ein, warm, lächelnd, nackt, wie eine Besitzerin, die nach ihrem Eigentum sieht. Ihr Blick gleitet über die Elfe, über die Ketten, über euch. „Nun“, sagt sie freundlich. „Seid ihr fertig mit … was auch immer ihr getan habt?“ Dein Magen zieht sich zusammen wie damals, als der Krieger vor dem ganzen Stamm die Hand nach dir ausstreckte. Damals hast du zugeschlagen. Heute steht zwischen dir und ihr nur ein Lächeln.</p>
+<p>Dann spielt Sinka das Gespräch. Typische Sätze, je nachdem, was die Gruppe sagt:</p>
+<ul>
+<li>Wenn jemand sagt, die Diebin wolle gehen: „Das glaube ich gern. Aber sie hat mich bestohlen. Dafür büßt sie eine Weile.“</li>
+<li>Wenn jemand protestiert: „Ich fürchte, meine Entscheidung steht nicht zur Debatte.“</li>
+<li>Wenn jemand ausspricht, was der Dschinn tut: Sinka verliert nicht einmal das Lächeln. „Ihr habt ein hartes Wort dafür. In meinem Haus heißt es Buße. Sie wusste, wessen Schatzkammer sie betritt.“ Sie streicht der Diebin im Vorbeigehen das Haar aus dem Gesicht, beinahe zärtlich. Die Diebin hält ganz still.</li>
+<li><span class="click">▶ Frage einblenden</span> Dann, neugierig, zur ganzen Gruppe: „Wie handhabt ihr es denn mit Dieben, dort wo ihr herkommt?“</li>
+</ul>
+<p>Wenn Isura antwortet „Hand ab“, lacht Sinka: „Seht ihr? Da bin ich ja noch richtig gnädig.“ Wenn Kimiko von ihrer Kommune erzählt, in der allen alles gehört: „Was für eine seltsame Vorstellung.“</p>
+<p>Dann sieht Sinka Shagra an, als Letzte, und wartet. Frag Azura: <b>„Wie geht man im Stamm mit Dieben um? Und sagt Shagra das laut?“</b></p>
+<p>Hilfe für Azura, falls gewünscht: Im Stamm ist Stehlen von Fremden Stärke, Gruumshs Recht. Stehlen vom eigenen Stamm wird mit Blut bezahlt, oft vor allen. Aber eine Gefangene, die man behält, um mit ihr zu spielen? Das ist für Orks Besitz, nicht Strafe.</p>
+  </aside>
+</section>
+
+<!-- 9 Entscheidung -->
+<section class="slide" data-scene="Die Diebin" data-title="Shagras Entscheidung">
+  <div class="bg dim"><div style="background-image:url(img/db-szene-raum.jpg)"></div></div>
+  <div class="col" style="left:0; right:0; width:auto; top:330px">
+    <div class="big">Was tut Shagra?</div>
+  </div>
+  <aside>
+<p>Azura entscheidet frei. So reagiert die Welt auf die naheliegenden Möglichkeiten:</p>
+<ul>
+<li><b>Schweigen:</b> Shagra sagt nichts, um das Rudel zu schützen. Sinka nickt zufrieden und bittet alle hinaus. Die Diebin sieht Shagra nach, als Letzte. Das ist das, was am Tisch passiert ist. Frag danach: „Was kostet Shagra dieses Schweigen?“</li>
+<li><b>Der Elfe etwas geben:</b> Shagra nimmt ihren Wolfspelz und legt ihn der Diebin um die Schultern. Nichts weiter, kein Wort. Sinka hebt eine Augenbraue, dann lächelt sie: „Wie fürsorglich. Lasst ihn ihr, wenn Ihr möchtet. Es ist kalt geworden.“ Shagra hat nichts gegen die Regeln getan, und doch etwas. Ohne den Pelz fühlt sie sich nackt, den ganzen Abend.</li>
+<li><b>Offen vor Sinka treten:</b> Shagra sagt Sinka ins Gesicht, was sie von diesem Raum hält. Sinka hört höflich zu, ohne Ärger. „Ihr habt ein großes Herz für eine Orkin. Das ist selten. Ich werde es mir merken.“ Kompliment oder Drohung, bleibt offen. Die Diebin bleibt hängen.</li>
+<li><b>Ein Handel aus Stärke:</b> Shagra bietet einen Kampf an, zum Beispiel in der Arena um die Freiheit der Diebin. Sinka ist amüsiert: „Eine Orkin, die für eine Elfe blutet? Das will ich sehen.“ Sie nimmt an, aber der Gegner ist ihr <b>Dschinn</b>. Gewinnt Shagra, ist die Diebin frei und muss das Haus noch heute Nacht verlassen. Verliert Shagra, trägt sie einen Tag lang das Halsband des Hauses und dient Sinkas Gästen als Leibwache. Für eine Orkin, die vor ihrem Stamm geflohen ist, damit sie niemandem gehört, ist das der höchste Preis. Den Kampf spielt ihr nicht mehr heute, das ist ein Haken für später.</li>
+<li><b>Heimlich befreien:</b> Shagra nennt so etwas „Shargaas-Art“ und verachtet es. Wenn Azura das trotzdem will: Liadons Plan mit Kimiko als Katze ist schon unterwegs. Shagra kann so tun, als hätte sie nichts gehört. Frag dann: „Ist das Feigheit oder Klugheit?“</li>
+<li><b>Mit der Gruppe reden, statt allein zu handeln:</b> Shagra sagt den anderen, warum sie dieser Raum so trifft. Wenn sie von ihrem Stamm erzählt, hört sogar Felan still zu. Spiel die Gruppe ehrlich berührt, aber nicht bekehrt. Das ist der Moment, in dem Shagra zum Rudel gehört, auch wenn die Elfe hängen bleibt.</li>
+</ul>
+<p>Will Azura würfeln: Weisheitsrettungswurf SG 12, wenn Sinka eintritt und die Wut hochkommt. Ein Fehlschlag heißt nur, dass Shagras Hand zur Glefe geht. Was sie damit tut, entscheidet Azura.</p>
+  </aside>
+</section>
+
+<!-- 10 Die Tür schließt sich -->
+<section class="slide" data-scene="Die Diebin" data-title="Die Tür schließt sich">
+  <div class="bg"><div style="background-image:url(img/db-szene-tuer-zu.jpg)"></div></div>
+  <div class="col" style="top:300px">
+    <h2>Die Tür schließt sich</h2>
+    <div class="rule"></div>
+    <div class="quote frag">Es ist Abend.</div>
+  </div>
+  <aside>
+<p>Sinka bittet die Gruppe hinaus. Lies vor, passend zu Shagras Entscheidung (den kursiven Satz mit dem Pelz nur, wenn sie ihn der Diebin gegeben hat):</p>
+<p class="read">Sinka hält euch die Tür auf, lächelnd, die perfekte Gastgeberin. „Ich wünsche euch noch einen angenehmen Abend. Bedenkt, ab Mitternacht ist Bettruhe.“ Als du als Letzte hinausgehst, hörst du hinter dir die Kette klirren. Einmal, leise. Du drehst dich nicht um. Durch die Wand, irgendwo nebenan, wo die Waffenkammer liegt, riechst du plötzlich Rauch. Süßlich, wie von einer Öllampe, die gerade jemand gerieben hat. <span class="click">▶ Satz einblenden</span> Es ist Abend. <u>Dein Pelz bleibt in diesem Raum, und du weißt nicht, ob du ihn je wiedersiehst.</u> Im Gang ist es kühler. Liadon flüstert etwas zu Kimiko, und Kimiko nickt kaum merklich. Du hast es gehört. Orks hören gut. Du sagst nichts. Morak ist draußen, und zum ersten Mal an diesem Abend bist du froh, dass er nicht gesehen hat, was du gesehen hast.</p>
+<p><b>Zum Abschluss der Szene frag Azura:</b></p>
+<ul>
+<li>„Was ist schwerer für Shagra, die Elfe oder die Kette?“</li>
+<li>„Shagra hat das Wort im Kopf, das niemand ausgesprochen hat. Hat sie es gesagt? Warum oder warum nicht?“</li>
+<li>„Was hätte Shagra im Stamm getan, und was hat sie heute anders gemacht?“</li>
+<li>„Wem in der Gruppe vertraut Shagra nach diesem Raum mehr, wem weniger?“</li>
+</ul>
+<p>Dann zurück ins Bett in der Villa, zum Abschluss der Sitzung. Die letzte Folie „Die Leute im Haus“ ist fürs Nachgespräch.</p>
+  </aside>
+</section>
+
+<!-- 11 Die Leute im Haus -->
+<section class="slide" data-scene="Die Diebin" data-title="Die Leute im Haus">
+  <div class="gallery">
+    <div class="kicker">Nachgespräch</div>
+    <h2>Die Leute im Haus</h2>
+    <div class="portraits" style="margin-top:40px; gap:10px 50px">
+      <figure class="pt" style="width:300px"><div class="img" style="background-image:url(img/db-p-sinka.jpg)"></div><figcaption><b>Lady Sinka Sarab</b>Herrin der Villa</figcaption></figure>
+      <figure class="pt" style="width:300px"><div class="img" style="background-image:url(img/db-p-carmilla.jpg)"></div><figcaption><b>Carmilla</b>in Sinkas Bett</figcaption></figure>
+      <figure class="pt" style="width:300px"><div class="img" style="background-image:url(img/db-p-diebin.jpg)"></div><figcaption><b>Die Diebin</b>seit zwei Tagen an der Kette</figcaption></figure>
+      <figure class="pt" style="width:300px"><div class="img" style="background-image:url(img/db-p-dschinn.jpg)"></div><figcaption><b>Der Dschinn</b>Sinkas Wächter</figcaption></figure>
+    </div>
+  </div>
+  <aside>
+<h3>Nachgespräch</h3>
+<p>Gut als Einstieg: Am Tisch wurde über diese Szene gelacht. Wie hat sie sich heute angefühlt, als Shagra? Was ist der Unterschied zwischen dem, was am Tisch gesagt wurde, und dem, was Shagra gesehen hat?</p>
+<p>Fragen an Azura: Wie sieht Azura Sinka? Ist ihre „Buße“ in seiner Welt Recht? Was wäre ein Weg für Shagra, mit so etwas umzugehen, ohne die Gruppe zu sprengen?</p>
+  </aside>
+</section>
+
+</div>
+
+<div id="progress"></div>
+<div id="pv">
+  <div id="pv-bar">
+    <div class="title" id="pv-title"></div>
+    <span id="pv-count"></span>
+    <span id="pv-timer" title="Klicken setzt die Uhr zurück">0:00</span>
+    <span id="pv-scenes"></span>
+    <button id="pv-prev">‹ Zurück</button>
+    <button id="pv-nextbtn">Weiter ›</button>
+    <button class="open" id="pv-open">Folien-Fenster öffnen</button>
+  </div>
+  <div id="pv-cur"></div>
+  <div id="pv-side">
+    <div class="lbl" id="pv-nextlbl">Als Nächstes</div>
+    <iframe id="pv-next" title="Nächste Folie"></iframe>
+    <div id="pv-frag"></div>
+    <div id="pv-help">
+      <b>So geht's:</b> Mit „Folien-Fenster öffnen“ ein zweites Fenster öffnen und nur dieses in Discord teilen. Gesteuert wird hier: <b>Pfeiltasten</b>, <b>Leertaste</b> oder die Knöpfe oben. <b>N</b> springt zur nächsten Folie, ohne den Rest einzublenden. <b>1</b>, <b>2</b>, <b>3</b> oder die Szenen-Knöpfe oben springen zum Anfang einer Szene, <b>0</b> zum Deckblatt. Beide Fenster bleiben synchron, auch wenn du im Folien-Fenster klickst.<br>
+      Die Uhr misst die Zeit seit dem Start, ein Klick setzt sie zurück.
+    </div>
+  </div>
+</div>
+<div id="sl"></div>
+
+<script>
+(function () {
+  var params = new URLSearchParams(location.search);
+  var mode = params.has('presenter') ? 'presenter' : params.has('preview') ? 'preview' : 'audience';
+  if (mode !== 'audience') document.body.classList.add(mode);
+
+  var stage = document.getElementById('stage');
+  var slides = [].slice.call(document.querySelectorAll('.slide'));
+  var sl = document.getElementById('sl');
+  var bar = document.getElementById('progress');
+  var cur = 0, shown = 0;
+  var starts = slides.filter(function (s) { return s.hasAttribute('data-start'); }).map(function (s) { return slides.indexOf(s); });
+
+  // Synchronisation zwischen Referenten- und Folienfenster (gleicher Browser)
+  var chan = null;
+  try { chan = new BroadcastChannel('rollentausch-praesentation'); } catch (e) {}
+  function send(msg) {
+    if (mode === 'preview') return;
+    if (chan) chan.postMessage(msg);
+    try { localStorage.setItem('rollentausch-sync', JSON.stringify({ m: msg, t: Date.now() })); } catch (e) {}
+  }
+  function receive(msg) {
+    if (mode === 'preview' || !msg) return;
+    if (msg.type === 'state') apply(msg.i, msg.f, true);
+    else if (msg.type === 'hello' && mode === 'presenter') send({ type: 'state', i: cur, f: shown });
+  }
+  if (chan) chan.onmessage = function (e) { receive(e.data); };
+  window.addEventListener('storage', function (e) {
+    if (e.key !== 'rollentausch-sync' || !e.newValue || chan) return;
+    try { receive(JSON.parse(e.newValue).m); } catch (err) {}
+  });
+
+  function fit() {
+    var box = mode === 'presenter' ? document.getElementById('pv-cur').getBoundingClientRect()
+      : { left: 0, top: 0, width: window.innerWidth, height: window.innerHeight };
+    var s = Math.min(box.width / 1600, box.height / 900);
+    stage.style.left = (box.left + box.width / 2) + 'px';
+    stage.style.top = (box.top + box.height / 2) + 'px';
+    stage.style.transform = 'translate(-50%, -50%) scale(' + s + ')';
+  }
+  function frags(i) { return [].slice.call(slides[i].querySelectorAll('.frag')); }
+
+  function apply(i, f, remote) {
+    i = Math.max(0, Math.min(slides.length - 1, i));
+    var all = frags(i);
+    if (f < 0) f = all.length;
+    f = Math.max(0, Math.min(all.length, f));
+    if (i !== cur || !slides[i].classList.contains('active')) {
+      slides.forEach(function (s, k) { s.classList.toggle('active', k === i); });
+    }
+    all.forEach(function (el, k) { el.classList.toggle('on', k < f); });
+    cur = i; shown = f;
+    var a = slides[i].querySelector('aside');
+    sl.innerHTML = '<h3>' + (i + 1) + ' / ' + slides.length + ' · ' + slides[i].dataset.scene + ' · ' + slides[i].dataset.title + '</h3>' + (a ? a.innerHTML : '');
+    bar.style.width = ((i + 1) / slides.length * 100) + '%';
+    if (location.hash !== '#' + (i + 1)) history.replaceState(null, '', location.pathname + location.search + '#' + (i + 1));
+    if (mode === 'presenter') updatePresenter();
+    if (!remote) send({ type: 'state', i: cur, f: shown });
+  }
+  function next() {
+    if (shown < frags(cur).length) apply(cur, shown + 1);
+    else if (cur < slides.length - 1) apply(cur + 1, 0);
+  }
+  function prev() {
+    if (shown > 0) apply(cur, shown - 1);
+    else if (cur > 0) apply(cur - 1, -1);
+  }
+  function fullscreen() {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen && document.documentElement.requestFullscreen();
+    else document.exitFullscreen && document.exitFullscreen();
+  }
+
+  // Referenten-Ansicht
+  var nextFrame = document.getElementById('pv-next');
+  var t0 = Date.now();
+  function updatePresenter() {
+    document.getElementById('pv-title').textContent = slides[cur].dataset.scene + ' · ' + slides[cur].dataset.title;
+    [].forEach.call(document.querySelectorAll('#pv-scenes button'), function (btn) { btn.classList.toggle('cur', slides[cur].dataset.scene === btn.textContent); });
+    document.getElementById('pv-count').textContent = (cur + 1) + ' / ' + slides.length;
+    var rest = frags(cur).length - shown;
+    document.getElementById('pv-frag').textContent = rest > 0
+      ? 'Auf dieser Folie kommt noch ' + rest + (rest === 1 ? ' Element.' : ' Elemente.')
+      : '';
+    var last = cur >= slides.length - 1;
+    document.getElementById('pv-nextlbl').textContent = last ? 'Letzte Folie' : 'Als Nächstes: ' + (slides[cur + 1].dataset.scene !== slides[cur].dataset.scene ? slides[cur + 1].dataset.scene + ' · ' : '') + slides[cur + 1].dataset.title;
+    var src = location.pathname + '?preview#' + (last ? cur + 1 : cur + 2);
+    if (nextFrame.dataset.src !== src) { nextFrame.dataset.src = src; nextFrame.src = src; }
+  }
+  if (mode === 'presenter') {
+    document.getElementById('pv-prev').onclick = prev;
+    document.getElementById('pv-nextbtn').onclick = next;
+    document.getElementById('pv-open').onclick = function () {
+      window.open(location.pathname + '#' + (cur + 1), 'rollentausch-folien', 'width=1280,height=760');
+    };
+    starts.forEach(function (n) {
+      var btn = document.createElement('button');
+      btn.textContent = slides[n].dataset.scene;
+      btn.onclick = function () { apply(n, 0); };
+      document.getElementById('pv-scenes').appendChild(btn);
+    });
+    var timer = document.getElementById('pv-timer');
+    timer.onclick = function () { t0 = Date.now(); };
+    setInterval(function () {
+      var s = Math.floor((Date.now() - t0) / 1000);
+      timer.textContent = Math.floor(s / 60) + ':' + ('0' + s % 60).slice(-2);
+    }, 1000);
+  }
+
+  if (mode === 'preview') {
+    window.addEventListener('hashchange', function () { apply(parseInt(location.hash.slice(1), 10) - 1 || 0, -1, true); });
+  } else {
+    document.addEventListener('keydown', function (e) {
+      var k = e.key;
+      if (k === 'ArrowRight' || k === 'ArrowDown' || k === ' ' || k === 'PageDown' || k === 'Enter') { e.preventDefault(); next(); }
+      else if (k === 'ArrowLeft' || k === 'ArrowUp' || k === 'PageUp' || k === 'Backspace') { e.preventDefault(); prev(); }
+      else if (k === 'n' || k === 'N') { if (cur < slides.length - 1) apply(cur + 1, 0); }
+      else if (k === '0') apply(0, 0);
+      else if (k >= '1' && k <= '9' && starts[+k - 1] !== undefined) apply(starts[+k - 1], 0);
+      else if (k === 'Home') apply(0, 0);
+      else if (k === 'End') apply(slides.length - 1, -1);
+      else if (k === 'f' || k === 'F') fullscreen();
+      else if ((k === 'v' || k === 'V') && mode === 'audience') sl.classList.toggle('open');
+      else if (k === 'p' || k === 'P') window.open(location.pathname + '?presenter#' + (cur + 1), 'rollentausch-referent');
+    });
+    stage.addEventListener('click', function (e) {
+      var r = stage.getBoundingClientRect();
+      (e.clientX < r.left + r.width / 4 ? prev : next)();
+    });
+    var tx = null;
+    document.addEventListener('touchstart', function (e) { tx = e.touches[0].clientX; }, { passive: true });
+    document.addEventListener('touchend', function (e) {
+      if (tx === null) return;
+      var dx = e.changedTouches[0].clientX - tx; tx = null;
+      if (Math.abs(dx) > 50) (dx < 0 ? next : prev)();
+    });
+  }
+  window.addEventListener('resize', fit);
+
+  fit();
+  var start = parseInt(location.hash.slice(1), 10);
+  apply(isNaN(start) ? 0 : start - 1, mode === 'preview' ? -1 : 0, true);
+  if (mode === 'audience') send({ type: 'hello' });
+})();
+</script>
+</body>
+</html>
