@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shagras Schwächen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=IM+Fell+English+SC&family=IM+Fell+English:ital@1&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #f5e6d2;
+  --card: #f9eedf;
+  --ink: #2b2118;
+  --header: #58180d;
+  --gold: #8a6a3a;
+  --muted: #6b5536;
+  --line: #d9c3a3;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { background: var(--paper); font-family: "EB Garamond", Georgia, serif; color: var(--ink); font-size: 19px; line-height: 1.5; }
+
+/* Kopf mit Bild, wie die Titelfolien */
+.hero { position: relative; min-height: 78vh; overflow: hidden; display: flex; align-items: center; justify-content: flex-end; }
+.hero .bg { position: absolute; inset: -2%; background: url(img/shagra.jpg) center / cover no-repeat; animation: drift 28s ease-in-out infinite alternate; }
+.hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to left, var(--paper) 0%, rgba(245,230,210,.92) 30%, rgba(245,230,210,0) 58%), linear-gradient(to top, var(--paper) 0%, rgba(245,230,210,0) 25%); }
+@keyframes drift { from { transform: scale(1.02); } to { transform: scale(1.08) translate(-1.2%, -.8%); } }
+.hero .col { position: relative; z-index: 1; width: min(640px, 100%); margin-right: 5vw; padding: 40px 16px; text-align: center; }
+.kicker { font-family: "IM Fell English SC", serif; font-size: 24px; color: var(--gold); letter-spacing: 3px; }
+h1 { font-family: "IM Fell English SC", serif; font-weight: 400; color: var(--header); font-size: clamp(54px, 8vw, 96px); line-height: 1; margin: 10px 0 14px; }
+h2 { font-family: "IM Fell English SC", serif; font-weight: 400; color: var(--header); font-size: clamp(38px, 5vw, 56px); line-height: 1.05; text-align: center; }
+.rule { width: 260px; max-width: 70%; height: 2px; margin: 16px auto 22px; background: linear-gradient(to right, transparent, var(--gold), transparent); }
+.sub { font-family: "IM Fell English", serif; font-style: italic; font-size: clamp(24px, 3vw, 32px); color: var(--muted); }
+.hero p.lead { margin-top: 22px; font-size: 19px; color: var(--muted); }
+.hero p.lead code { font-family: inherit; font-style: italic; }
+
+/* Inhaltsverzeichnis */
+nav { position: sticky; top: 0; z-index: 5; background: rgba(245,230,210,.94); backdrop-filter: blur(4px); border-bottom: 1px solid var(--line); }
+nav ul { list-style: none; display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 26px; padding: 10px 16px; max-width: 1200px; margin: 0 auto; }
+nav a { font-family: "IM Fell English SC", serif; color: var(--header); text-decoration: none; font-size: 19px; }
+nav a:hover { color: var(--gold); }
+
+main { max-width: 1200px; margin: 0 auto; padding: 0 16px 80px; }
+section { padding-top: 70px; text-align: center; scroll-margin-top: 50px; }
+.intro { font-family: "IM Fell English", serif; font-style: italic; font-size: 24px; color: var(--muted); max-width: 720px; margin: 0 auto 30px; }
+
+/* Karten */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 22px; text-align: left; }
+.card { position: relative; background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 22px 24px 20px; box-shadow: 0 2px 8px rgba(88,24,13,.06); }
+.card .num { position: absolute; top: 16px; right: 18px; font-family: "IM Fell English SC", serif; color: var(--gold); font-size: 22px; }
+.card h3 { font-family: "IM Fell English SC", serif; font-weight: 400; color: var(--header); font-size: 28px; line-height: 1.1; padding-right: 44px; }
+.card .en { font-family: "IM Fell English", serif; font-style: italic; color: var(--muted); font-size: 19px; margin-top: 2px; }
+.card .desc { margin-top: 12px; font-style: italic; color: var(--muted); }
+.card .why { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+.card.own { border-color: var(--gold); }
+
+footer { text-align: center; color: var(--muted); font-style: italic; padding: 0 16px 50px; }
+
+@media (max-width: 700px) {
+  .hero { justify-content: center; min-height: 70vh; }
+  .hero::after { background: linear-gradient(to top, var(--paper) 0%, rgba(245,230,210,.9) 45%, rgba(245,230,210,.25) 100%); }
+  .hero .col { margin: 0; align-self: flex-end; }
+  .grid { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) { .hero .bg { animation: none; } html { scroll-behavior: auto; } }
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="bg" role="img" aria-label="Bleistiftzeichnung einer Orkin in einer weiten Ebene"></div>
+  <div class="col">
+    <div class="kicker">Shagra Morakai</div>
+    <h1>Shagras Schwächen</h1>
+    <div class="rule"></div>
+    <div class="sub">20 aus der Liste, 8 eigene</div>
+    <p class="lead">Die Nummern stammen aus der W100-Liste der Charakterschwächen. Ausgewählt nach Shagras Herkunft und danach, wie sie in den Szenen reagiert hat.</p>
+  </div>
+</header>
+<nav>
+  <ul>
+    <li><a href="#s1">Aus ihrem Kern</a></li>
+    <li><a href="#s2">Aus der Ork-Kultur</a></li>
+    <li><a href="#s3">Versteckte Seiten</a></li>
+    <li><a href="#s4">Eigene Schwächen</a></li>
+  </ul>
+</nav>
+<main>
+  <section id="s1">
+    <h2>Aus ihrem Kern: Freiheit und Stolz</h2>
+    <div class="rule"></div>
+    <p class="intro">Was Shagra zur Kriegerin gemacht hat, macht sie auch schwer zu lenken.</p>
+    <div class="grid">
+      <article class="card">
+        <div class="num">82</div>
+        <h3>Stolz</h3>
+        <div class="en">Prideful</div>
+        <p class="desc">Zu stolz, um Fehler zuzugeben oder Hilfe anzunehmen.</p>
+        <p class="why">Hilfe anzunehmen fühlt sich für sie wie Schwäche an. In der Arena bleibt sie lieber liegen, als sich zu beschweren.</p>
+      </article>
+      <article class="card">
+        <div class="num">98</div>
+        <h3>Stur</h3>
+        <div class="en">Stubborn</div>
+        <p class="desc">Ändert Meinung oder Pläne nicht, egal welche Beweise vorliegen.</p>
+        <p class="why">Sie hat sich gegen ihren ganzen Stamm gestellt. Von einer Meinung bringt sie so leicht niemand ab.</p>
+      </article>
+      <article class="card">
+        <div class="num">53</div>
+        <h3>Unnachgiebig</h3>
+        <div class="en">Inflexible</div>
+        <p class="desc">Weigert sich, Pläne anzupassen oder Kompromisse einzugehen.</p>
+        <p class="why">Behandelt jemand Menschen als Besitz, gibt es für sie keinen Kompromiss, auch dann nicht, wenn die Gruppe einen will.</p>
+      </article>
+      <article class="card">
+        <div class="num">28</div>
+        <h3>Misstrauisch</h3>
+        <div class="en">Distrustful</div>
+        <p class="desc">Kann die Absichten anderer kaum glauben, selbst wenn ihr guter Wille bewiesen ist.</p>
+        <p class="why">Jahrelang war sie frei nur, solange sie stärker war. Sie wartet immer darauf, dass jemand Anspruch auf sie erhebt.</p>
+      </article>
+      <article class="card">
+        <div class="num">41</div>
+        <h3>Nachtragend</h3>
+        <div class="en">Grudge-holding</div>
+        <p class="desc">Verzeiht keine Kränkung, sei sie noch so klein.</p>
+        <p class="why">Was der Stamm ihr und den Frauen angetan hat, vergisst sie nie.</p>
+      </article>
+      <article class="card">
+        <div class="num">35</div>
+        <h3>Angst vor dem Scheitern</h3>
+        <div class="en">Fearful of failure</div>
+        <p class="desc">Zögert, Risiken einzugehen, um sich nicht zu blamieren.</p>
+        <p class="why">Insgeheim will sie dem Stamm beweisen, dass ihr Weg richtig war. Scheitert sie, hätten die Alten recht. Zugeben würde sie das nie.</p>
+      </article>
+    </div>
+  </section>
+  <section id="s2">
+    <h2>Aus der Ork-Kultur</h2>
+    <div class="rule"></div>
+    <p class="intro">Was der Stamm ihr mitgegeben hat, auch wenn sie ihn verlassen hat.</p>
+    <div class="grid">
+      <article class="card">
+        <div class="num">47</div>
+        <h3>Hitzköpfig</h3>
+        <div class="en">Hot-headed</div>
+        <p class="desc">Wird schnell wütend und lässt sich leicht provozieren.</p>
+        <p class="why">Die Wut ist Gruumshs Geschenk. Sie ist schnell da und schwer zu bremsen.</p>
+      </article>
+      <article class="card">
+        <div class="num">87</div>
+        <h3>Schwarz-Weiß-Denker</h3>
+        <div class="en">Rigid thinker</div>
+        <p class="desc">Sieht die Dinge nur in Schwarz und Weiß.</p>
+        <p class="why">Ehre gegen „Shargaas-Art“: Hinterhalte, Gift und Gucklöcher sind für sie einfach ehrlos, ohne Grauzone.</p>
+      </article>
+      <article class="card">
+        <div class="num">81</div>
+        <h3>Voreingenommen</h3>
+        <div class="en">Prejudiced</div>
+        <p class="desc">Hat ungerechte, unbegründete Ansichten über bestimmte Gruppen.</p>
+        <p class="why">Gegen Elfen, wegen Gruumsh und Corellon. Gerade deshalb ist ihr Mitleid mit der Diebin ein so großer Schritt.</p>
+      </article>
+      <article class="card">
+        <div class="num">58</div>
+        <h3>Vorverurteilend</h3>
+        <div class="en">Judgmental</div>
+        <p class="desc">Kritisiert andere hart, ohne sie zu verstehen.</p>
+        <p class="why">Wer mit List statt mit Kraft kämpft, ist für sie sofort verdächtig, bevor sie ihn kennt.</p>
+      </article>
+      <article class="card">
+        <div class="num">71</div>
+        <h3>Übertrieben ehrgeizig</h3>
+        <div class="en">Overly competitive</div>
+        <p class="desc">Macht aus allem einen Wettkampf, selbst aus freundschaftlichen Dingen.</p>
+        <p class="why">Recht des Stärkeren: Sie misst sich mit allen, auch wenn es nur ein Spiel ist.</p>
+      </article>
+      <article class="card">
+        <div class="num">43</div>
+        <h3>Schroff</h3>
+        <div class="en">Harsh</div>
+        <p class="desc">Redet so unverblümt, dass es unnötig verletzt.</p>
+        <p class="why">Sie sagt, was sie denkt, ohne höfliche Verpackung. In der Villa eckt sie damit an.</p>
+      </article>
+      <article class="card">
+        <div class="num">49</div>
+        <h3>Blind für die Gefühle anderer</h3>
+        <div class="en">Ignorant of others' feelings</div>
+        <p class="desc">Bemerkt emotionale Signale nicht oder kümmert sich nicht darum.</p>
+        <p class="why">Im Stamm war Schwäche verabscheut, und leise Zeichen von Kummer hat sie nie lesen gelernt.</p>
+      </article>
+      <article class="card">
+        <div class="num">9</div>
+        <h3>Prahlerisch</h3>
+        <div class="en">Boastful</div>
+        <p class="desc">Gibt ständig mit Leistungen an, echten oder übertriebenen.</p>
+        <p class="why">Sie erzählt gern und laut von Jagden und Kämpfen. Die Geschichten werden dabei nicht kleiner.</p>
+      </article>
+      <article class="card">
+        <div class="num">45</div>
+        <h3>Genusssüchtig</h3>
+        <div class="en">Hedonistic</div>
+        <p class="desc">Jagt dem Vergnügen bis zum Exzess nach, oft auf Kosten anderer.</p>
+        <p class="why">Orks leben kurz, also feiert sie jetzt: Essen, Trinken, Lachen, manchmal zu viel.</p>
+      </article>
+      <article class="card">
+        <div class="num">37</div>
+        <h3>Tollkühn</h3>
+        <div class="en">Foolhardy</div>
+        <p class="desc">Stürzt sich ohne nachzudenken in Gefahr.</p>
+        <p class="why">Morgen kann man tot sein, also zögert sie nicht. Sie stürzt sich in Gefahren, die andere erst durchdenken.</p>
+      </article>
+      <article class="card">
+        <div class="num">51</div>
+        <h3>Impulsiv</h3>
+        <div class="en">Impulsive</div>
+        <p class="desc">Folgt plötzlichen Eingebungen, ohne die Dinge zu durchdenken.</p>
+        <p class="why">Sie handelt aus dem Bauch heraus, oft bevor die Gruppe einen Plan hat.</p>
+      </article>
+    </div>
+  </section>
+  <section id="s3">
+    <h2>Versteckte Seiten</h2>
+    <div class="rule"></div>
+    <p class="intro">Was man ihr nicht ansieht.</p>
+    <div class="grid">
+      <article class="card">
+        <div class="num">75</div>
+        <h3>Übertrieben verschwiegen</h3>
+        <div class="en">Overly secretive</div>
+        <p class="desc">Hält Informationen zurück, selbst wenn sie harmlos oder hilfreich wären.</p>
+        <p class="why">Über die verschwundenen Geschwister spricht man nicht, das ist Tabu. Omen liest sie heimlich. Das meiste aus ihrer Vergangenheit behält sie für sich.</p>
+      </article>
+      <article class="card">
+        <div class="num">3</div>
+        <h3>Emotional distanziert</h3>
+        <div class="en">Aloof</div>
+        <p class="desc">Hält andere emotional auf Abstand und wirkt dadurch kalt oder desinteressiert.</p>
+        <p class="why">Gefühle zeigt sie nicht, schon gar nicht Schwäche. Bei Nähe, Zärtlichkeit und Begehren macht sie dicht, weil sie das nur als Besitz kennengelernt hat. Was sie in der Arena oder bei der Diebin wirklich fühlt, sieht man ihr kaum an.</p>
+      </article>
+      <article class="card">
+        <div class="num">21</div>
+        <h3>Zynisch</h3>
+        <div class="en">Cynical</div>
+        <p class="desc">Unterstellt Menschen und Situationen immer das Schlechteste.</p>
+        <p class="why">In der Villa vermutet sie hinter jedem Lächeln eine Maske und meistens etwas Schlimmeres.</p>
+      </article>
+    </div>
+  </section>
+  <section id="s4">
+    <div class="kicker">Nicht aus der Liste</div>
+    <h2>Eigene Schwächen</h2>
+    <div class="rule"></div>
+    <p class="intro">Eigens für Shagra ausgedacht. Sie hängen direkt an ihrer Herkunft und an dem, was in der Villa passiert ist.</p>
+    <div class="grid">
+      <article class="card own">
+        <div class="num">E1</div>
+        <h3>Ehre vor Vernunft</h3>
+        <div class="en">Honor-bound to a fault</div>
+        <p class="desc">Hält sich an die Regeln eines fairen Kampfes, auch wenn der Gegner es nicht tut, und verliert lieber, als ehrlos zu siegen.</p>
+        <p class="why">Die Arena: Isura beißt, Shagra bleibt bei den Fäusten. Beißt sie zurück, wäre sie nicht besser als „Shargaas-Art“.</p>
+      </article>
+      <article class="card own">
+        <div class="num">E2</div>
+        <h3>Omengläubig</h3>
+        <div class="en">Superstitious</div>
+        <p class="desc">Sieht überall Zeichen der Götter. Ein schlechtes Omen kann sie lähmen oder zu Entscheidungen treiben, die niemand sonst versteht.</p>
+        <p class="why">Im Kult Luthics gelernt. Ein Omen ignoriert sie nie, auch wenn sie es nicht zugibt. Ein einäugiger Rabe kann ihren ganzen Tag bestimmen.</p>
+      </article>
+      <article class="card own">
+        <div class="num">E3</div>
+        <h3>Verachtet Schwäche</h3>
+        <div class="en">Contemptuous of weakness</div>
+        <p class="desc">Reagiert auf Jammern, Hilflosigkeit oder Krankheit mit Ungeduld oder Abscheu, bei anderen und am meisten bei sich selbst.</p>
+        <p class="why">Im Stamm verschwanden die Schwachen einfach. Darum ist ihr Mitleid mit der Diebin ein Kampf gegen sich selbst, und darum gibt sie eigene Schmerzen nie zu.</p>
+      </article>
+      <article class="card own">
+        <div class="num">E4</div>
+        <h3>Widersetzt sich Befehlen</h3>
+        <div class="en">Defiant of authority</div>
+        <p class="desc">Jeder Befehl klingt für sie nach einem Häuptling. Sie widersetzt sich auch sinnvollen Anweisungen, nur weil es Anweisungen sind.</p>
+        <p class="why">Niemand kommandiert sie herum. Wer ihr sagt, was sie tun soll, statt sie zu fragen, bekommt das Gegenteil.</p>
+      </article>
+      <article class="card own">
+        <div class="num">E5</div>
+        <h3>Sieht rot bei Ketten</h3>
+        <div class="en">Triggered by ownership</div>
+        <p class="desc">Sobald jemand wie Besitz behandelt wird, mit Halsband, Kette oder Harem, vergisst sie Vorsicht, Plan und Höflichkeit.</p>
+        <p class="why">Ihre empfindlichste Stelle aus der Herkunft. In der Villa voller Diener, Halsbänder und Ketten steht sie ständig kurz davor.</p>
+      </article>
+      <article class="card own">
+        <div class="num">E6</div>
+        <h3>Zerrissen zwischen Stamm und Rudel</h3>
+        <div class="en">Torn between two homes</div>
+        <p class="desc">Hasst ihren Stamm und vermisst ihn zugleich. Erwartet von der Gruppe, dass sie zusammenhält wie ein Stamm, und reagiert verletzt, wenn jeder sein eigenes Ding macht.</p>
+        <p class="why">Zugehörigkeit ist für Orks Heimat. Die Gruppe ist ihr neues Rudel, aber die Gruppe weiß das nicht unbedingt.</p>
+      </article>
+      <article class="card own">
+        <div class="num">E7</div>
+        <h3>Bevormundend gegenüber dem Rudel</h3>
+        <div class="en">Overprotective</div>
+        <p class="desc">Hält Freunde zurück, entscheidet für sie und stellt sich vor sie, auch wenn sie das gar nicht wollen.</p>
+        <p class="why">Sie hält ihr Rudel zurück, wenn es sich in tödliche Dummheiten stürzen will. Das Rudel sieht darin nicht immer Fürsorge, sondern manchmal einen Häuptling.</p>
+      </article>
+      <article class="card own">
+        <div class="num">E8</div>
+        <h3>Ungehobelt</h3>
+        <div class="en">Uncouth</div>
+        <p class="desc">Kennt die Sitten der Städte und des Adels nicht und hält Höflichkeit oft für Lüge. Isst mit den Händen, redet laut, berührt Fremde zur Begrüßung.</p>
+        <p class="why">Gesellig nach Orkart: Unterarm an Unterarm, laute Geschichten. In einer Villa mit Seidenkissen und Masken fällt sie damit überall auf.</p>
+      </article>
+    </div>
+  </section>
+</main>
+<footer>Shagra Morakai · Charakterschwächen</footer>
+</body>
+</html>
