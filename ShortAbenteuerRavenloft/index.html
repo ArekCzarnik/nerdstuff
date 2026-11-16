@@ -1,0 +1,864 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Die letzte Kutsche nach Erlengrund</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=IM+Fell+English+SC&family=IM+Fell+English:ital@1&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #f5e6d2;
+  --ink: #2b2118;
+  --header: #58180d;
+  --gold: #8a6a3a;
+  --muted: #6b5536;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body { background: var(--paper); font-family: "EB Garamond", Georgia, serif; color: var(--ink); }
+
+/* Fixe 1600×900-Bühne, per JS skaliert */
+#stage { position: absolute; left: 50%; top: 50%; width: 1600px; height: 900px; transform-origin: center center; background: var(--paper); overflow: hidden; }
+.slide { position: absolute; inset: 0; opacity: 0; visibility: hidden; transition: opacity .9s ease, visibility 0s linear .9s; }
+.slide.active { opacity: 1; visibility: visible; transition: opacity .9s ease; }
+
+/* Szenenbild */
+.bg { position: absolute; inset: 0; overflow: hidden; }
+.bg > div { position: absolute; inset: -2%; background-size: cover; background-position: center; }
+.slide.active .bg > div { animation: drift 28s ease-in-out infinite alternate; }
+.bg.zoom > div { transform-origin: 30% 65%; }
+.slide.active .bg.zoom > div { animation: zoomin 30s ease-out forwards; }
+@keyframes drift { from { transform: scale(1.02) translate(0, 0); } to { transform: scale(1.08) translate(-1.2%, -.8%); } }
+@keyframes zoomin { from { transform: scale(1.35); } to { transform: scale(1.55); } }
+/* Papierverlauf nach rechts, damit Text und Porträts lesbar bleiben */
+.bg::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to left, var(--paper) 0%, rgba(245,230,210,.92) 30%, rgba(245,230,210,0) 58%); }
+.bg.bottom::after { background: linear-gradient(to top, var(--paper) 0%, rgba(245,230,210,.9) 22%, rgba(245,230,210,0) 45%); }
+.bg.dim::after { background: radial-gradient(ellipse at center, rgba(245,230,210,.88) 0%, rgba(245,230,210,.75) 45%, rgba(245,230,210,.35) 100%); }
+.bg.none::after { display: none; }
+
+/* Textspalte rechts */
+.col { position: absolute; right: 70px; top: 70px; width: 640px; text-align: center; }
+.kicker { font-family: "IM Fell English SC", serif; font-size: 28px; color: var(--gold); letter-spacing: 3px; }
+h1 { font-family: "IM Fell English SC", serif; font-weight: 400; color: var(--header); font-size: 96px; line-height: 1; margin: 10px 0 14px; }
+h2 { font-family: "IM Fell English SC", serif; font-weight: 400; color: var(--header); font-size: 66px; line-height: 1; margin: 6px 0 4px; }
+.rule { width: 260px; height: 2px; margin: 16px auto 22px; background: linear-gradient(to right, transparent, var(--gold), transparent); }
+.sub { font-family: "IM Fell English", serif; font-style: italic; font-size: 34px; color: var(--muted); }
+.quote { font-family: "IM Fell English", serif; font-style: italic; font-size: 40px; line-height: 1.2; color: var(--ink); margin-top: 26px; }
+.big { font-family: "IM Fell English", serif; font-style: italic; font-size: 78px; line-height: 1.1; color: var(--header); }
+
+/* Porträts */
+.portraits { display: flex; flex-wrap: wrap; justify-content: center; gap: 18px 30px; margin-top: 8px; }
+.pt { width: 190px; text-align: center; }
+.pt.l { width: 270px; }
+.pt.xl { width: 340px; }
+.pt .img { width: 100%; aspect-ratio: 1; background-size: cover; background-position: center 30%; mix-blend-mode: multiply;
+  -webkit-mask-image: radial-gradient(circle at 50% 46%, #000 52%, transparent 71%); mask-image: radial-gradient(circle at 50% 46%, #000 52%, transparent 71%); }
+.pt figcaption { font-family: "IM Fell English", serif; font-style: italic; font-size: 23px; line-height: 1.15; color: var(--muted); margin-top: -6px; }
+.pt figcaption b { display: block; font-family: "IM Fell English SC", serif; font-style: normal; font-weight: 400; font-size: 26px; color: var(--header); }
+
+/* Schrittweise Einblendung */
+.frag { opacity: 0; transform: translateY(14px); transition: opacity .8s ease, transform .8s ease; }
+.frag.on { opacity: 1; transform: none; }
+.slide.active .pt.on .img { animation: breathe 7s ease-in-out infinite alternate; }
+@keyframes breathe { from { transform: scale(1); } to { transform: scale(1.035); } }
+
+/* Galerie am Ende */
+.gallery { position: absolute; inset: 60px 70px; text-align: center; }
+.gallery .portraits { gap: 10px 26px; margin-top: 18px; }
+.gallery .pt { width: 230px; }
+
+/* Leiste, Fortschritt */
+#progress { position: fixed; left: 0; bottom: 0; height: 4px; background: var(--gold); transition: width .5s ease; z-index: 5; }
+
+/* SL-Notizen, nur mit Taste V */
+#sl { position: fixed; left: 0; right: 0; bottom: 0; max-height: 46vh; overflow: auto; background: rgba(43,33,24,.94); color: #f3e7d3; padding: 18px 28px 22px; font-size: 18px; line-height: 1.45; transform: translateY(105%); transition: transform .35s ease; z-index: 10; }
+#sl.open { transform: none; }
+#sl h3 { font-family: "IM Fell English SC", serif; font-weight: 400; color: #e0b770; font-size: 20px; margin: 10px 0 4px; }
+#sl h3:first-child { margin-top: 0; }
+#sl p, #sl li { margin-bottom: 6px; }
+#sl ul, #sl ol { padding-left: 22px; }
+#sl .click { color: #e0b770; font-family: "IM Fell English SC", serif; font-size: .95em; margin: 10px 0 2px; }
+#sl span.click { font-style: normal; white-space: nowrap; margin: 0 4px; }
+#sl .read { font-style: italic; border-left: 3px solid #e0b770; padding-left: 12px; }
+body.presenter #sl .read { font-style: normal; font-size: 1.12em; line-height: 1.55; color: #fff8ec; background: rgba(224,183,112,.13); border-left: 6px solid #e0b770; border-radius: 6px; padding: 14px 20px 16px; margin: 16px 0 18px; }
+body.presenter #sl .read::before { content: "Vorlesen"; display: block; font-family: "IM Fell English SC", serif; font-size: .78em; letter-spacing: 2px; color: #e0b770; margin-bottom: 6px; }
+body.presenter #sl span.click { font-size: .8em; background: #e0b770; color: #2b2118; border-radius: 4px; padding: 1px 8px; }
+.slide aside { display: none; }
+
+
+/* Karte mit Beschriftungen */
+.map-bg > div, .slide.active .map-bg > div { position: absolute; inset: 0; background-size: cover; background-position: center; animation: none; }
+.pin { position: absolute; transform: translate(-50%, -50%); font-family: "IM Fell English SC", serif; font-size: 30px; color: var(--header); background: rgba(245,230,210,.9); border: 1px solid var(--gold); border-radius: 4px; padding: 2px 14px; white-space: nowrap; box-shadow: 0 2px 6px rgba(43,33,24,.25); }
+.pin.house { font-size: 26px; padding: 0 10px; border-radius: 50%; min-width: 46px; text-align: center; }
+.map-title { position: absolute; left: 40px; bottom: 30px; font-family: "IM Fell English SC", serif; font-size: 44px; color: var(--header); background: rgba(245,230,210,.85); padding: 4px 20px; border-radius: 4px; }
+
+/* Vorschau-Modus (für die Referenten-Ansicht): alles sichtbar, keine Bewegung */
+body.preview .frag { opacity: 1; transform: none; transition: none; }
+body.preview .slide { transition: none; }
+body.preview .bg > div, body.preview .pt .img { animation: none !important; }
+body.preview #progress, body.preview #sl { display: none; }
+
+/* Referenten-Ansicht */
+#pv { display: none; }
+body.presenter { background: #1f1813; color: #f3e7d3; }
+body.presenter #pv { display: block; }
+body.presenter #progress { display: none; }
+body.presenter #stage { box-shadow: 0 0 0 1px #5a4632, 0 10px 30px rgba(0,0,0,.5); }
+#pv-bar { position: fixed; left: 16px; right: 16px; top: 10px; height: 46px; display: flex; align-items: center; gap: 14px; font-size: 20px; }
+#pv-bar .title { font-family: "IM Fell English SC", serif; color: #e0b770; font-size: 26px; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#pv-bar button { font: inherit; font-size: 18px; background: #3a2c20; color: #f3e7d3; border: 1px solid #6b5536; border-radius: 6px; padding: 6px 14px; cursor: pointer; }
+#pv-bar button:hover { background: #4a3828; }
+#pv-bar .open { background: #8a6a3a; border-color: #e0b770; color: #fff; }
+#pv-timer { font-variant-numeric: tabular-nums; cursor: pointer; min-width: 70px; text-align: right; }
+#pv-cur { position: fixed; left: 16px; top: 66px; width: calc(42vw - 24px); height: calc((42vw - 24px) * 9 / 16); }
+body.presenter #sl { position: fixed; left: 42vw; right: 16px; top: 66px; bottom: 16px; max-height: none; transform: none; border-radius: 8px; border: 1px solid #5a4632; background: #2b2118; font-size: 25px; line-height: 1.5; padding: 22px 32px 28px; }
+body.presenter #sl h3 { font-size: 28px; margin-top: 20px; }
+body.presenter #sl p, body.presenter #sl li { margin-bottom: 12px; }
+#pv-side { position: fixed; left: 16px; width: calc(42vw - 24px); top: calc(66px + (42vw - 24px) * 9 / 16 + 14px); bottom: 16px; display: flex; flex-direction: column; gap: 8px; overflow: auto; }
+#pv-side .lbl { font-family: "IM Fell English SC", serif; color: #e0b770; font-size: 20px; }
+#pv-next { width: 100%; aspect-ratio: 16 / 9; border: 1px solid #5a4632; border-radius: 4px; background: var(--paper); }
+#pv-frag { font-size: 20px; color: #e0b770; min-height: 28px; }
+#pv-music { background: #2b2118; border: 1px solid #5a4632; border-radius: 8px; padding: 10px 12px; font-size: 17px; }
+#pv-music .lbl { font-size: 18px; }
+#pv-mstat { color: #f3e7d3; margin: 2px 0 8px; }
+#pv-mstat small { display: block; color: #bfae94; font-size: 15px; }
+#pv-music .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 6px; }
+#pv-music button, #pv-music select { font: inherit; font-size: 16px; background: #3a2c20; color: #f3e7d3; border: 1px solid #6b5536; border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+#pv-music button.on { border-color: #e0b770; color: #e0b770; }
+#pv-music input[type=range] { flex: 1; min-width: 100px; accent-color: #e0b770; }
+#sound-btn { display: none; position: fixed; right: 18px; bottom: 18px; z-index: 20; font-family: "IM Fell English SC", serif; font-size: 22px; background: rgba(245,230,210,.95); color: var(--header); border: 1px solid var(--gold); border-radius: 6px; padding: 6px 16px; cursor: pointer; }
+#pv-help { margin-top: auto; font-size: 15px; line-height: 1.45; color: #bfae94; }
+#pv-help b { color: #f3e7d3; }
+
+@media (prefers-reduced-motion: reduce) {
+  .slide, .frag, #sl { transition: none !important; }
+  .bg > div, .pt .img { animation: none !important; }
+}
+</style>
+</head>
+<body>
+<div id="stage">
+
+<!-- 1 Titel -->
+<section class="slide" data-title="Titel" data-music="">
+  <div class="bg"><div style="background-image:url(img/szene-01-die-strasse-im-nebel.jpg)"></div></div>
+  <div class="col" style="top:230px">
+    <div class="kicker">Ein Gruselabenteuer</div>
+    <h1 style="font-size:84px">Die letzte Kutsche nach Erlengrund</h1>
+    <div class="rule"></div>
+    <div class="sub">Für vier Charaktere der Stufe 3</div>
+  </div>
+  <aside>
+<h3>Worum es geht</h3>
+<p>Ein eigenständiges D&amp;D-Gruselabenteuer in Barovia für <b>2–3 Stunden</b>, angelehnt an die Atmosphäre von <i>Fluch von Strahd</i>. Ausgelegt auf <b>vier Charaktere der Stufe 3</b>. Die Gegnerwerte sind bewusst vereinfachte Eigenkreationen, das Kampagnenbuch brauchst du nicht.</p>
+<p>Eine Kutsche bringt die Gruppe durch den Nebel nach Erlengrund. In den Häusern liegen blutleere Tote. Ein vermeintlicher Arzt hat sich das Vertrauen der Bewohner erschlichen und lebt in einer alten Gruft außerhalb des Dorfes. Seine Ghule holen inzwischen die Leichen. Noch vor Morgengrauen soll eine letzte Dorfbewohnerin zu ihm gebracht werden.</p>
+<h3>Ablauf</h3>
+<ul>
+<li>Die Kutsche im Nebel: 15 Minuten</li>
+<li>Ankunft und erste Begegnungen: 25 Minuten</li>
+<li>Untersuchung der Häuser: 35–45 Minuten</li>
+<li>Der Weg zur alten Gruft: 15 Minuten</li>
+<li>Ghule und Vampir: 35–45 Minuten</li>
+<li>Der Brief aus Ravenloft: 10 Minuten</li>
+</ul>
+<p>Wenn du nur zwei Stunden hast, verwende zwei der drei Häuser (mit <b>N</b> überspringen) und halte den Weg zur Gruft kurz.</p>
+<h3>Musik</h3>
+<p>Die Musik kommt von <b>Tabletop Audio</b> und läuft im Folien-Fenster, damit sie mit dem Discord-Stream mitgeht (beim Teilen „Ton“ einschalten). Gesteuert wird sie links im Feld „Musik“: Pause, Auto (wechselt mit den Folien), Stille, Track von Hand, Lautstärke.</p>
+<p>Die Tracks liegen im Ordner <b>musik/</b> neben dieser Präsentation. Willst du einen tauschen, lade ihn auf tabletopaudio.com herunter, leg ihn dort ab und trag den Namen im <i>data-music</i> der Folie ein. Aktuell: <i>134_Carriage_Journey.mp3, 188_Barovian_Village.mp3, 255_The_Hearth_Inn.mp3, 335_Abandoned_Chapel.mp3, 186_Haunted.mp3, 180_Abandoned_Windmill.mp3, 37_Catacombs.mp3, 102_Vampire_Castle.mp3, 148_Barovian_Castle.mp3</i>.</p>
+<p>Blockiert der Browser den Ton, erscheint im Folien-Fenster unten rechts „Ton einschalten“: einmal klicken.</p>
+<h3>Für dich hinter dem Sichtschirm</h3>
+<p>Die tragenden Hinweise sind <b>Voss besuchte die Opfer → die Spuren führen zur Mühle → sein Sarg liegt in der Gruft</b>. Gib diese Hinweise zuverlässig weiter. Die Spannung entsteht daraus, was die Gruppe dort entdeckt und wie sie handelt.</p>
+  </aside>
+</section>
+
+<!-- 2 Die Straße im Nebel -->
+<section class="slide" data-title="Die Straße im Nebel" data-music="134_Carriage_Journey">
+  <div class="bg"><div style="background-image:url(img/szene-01-die-strasse-im-nebel.jpg)"></div></div>
+  <div class="col" style="top:270px">
+    <h2>Die Straße im Nebel</h2>
+    <div class="rule"></div>
+    <div class="quote frag">Dann hört ihr Hufe.</div>
+  </div>
+  <aside>
+<p>Beginne, während die Charaktere gemeinsam auf einer nächtlichen Straße unterwegs sind. Warum sie zusammen reisen, dürfen die Spieler mit einem Satz selbst festlegen.</p>
+<p class="read">Seit einer Stunde folgt ihr derselben Straße. Ihr habt den verwitterten Wegstein bereits zweimal passiert. Beide Male zeigte er in eine andere Richtung. Jetzt wird der Nebel so dicht, dass selbst eure Schritte dumpf klingen. <span class="click">▶ einblenden</span> Dann hört ihr Hufe.</p>
+  </aside>
+</section>
+
+<!-- 3 Die schwarze Kutsche -->
+<section class="slide" data-title="Die schwarze Kutsche">
+  <div class="bg"><div style="background-image:url(img/szene-02-die-schwarze-kutsche.jpg)"></div></div>
+  <div class="col" style="top:70px">
+    <h2>Die schwarze Kutsche</h2>
+    <div class="rule"></div>
+    <figure class="pt l frag" style="margin:0 auto"><div class="img" style="background-image:url(img/p-oskar-venn.jpg)"></div><figcaption><b>Der Kutscher</b></figcaption></figure>
+    <div class="quote frag" style="margin-top:10px; font-size:36px">„Nach Erlengrund? Steigt ein.<br>Nach dem Läuten sollte niemand<br>mehr auf der Straße sein.“</div>
+  </div>
+  <aside>
+<p class="read">Eine schwarze Kutsche hält neben euch. An ihren Türen blättert der Lack. Hinter den Fenstern schaukelt warmes Laternenlicht. <span class="click">▶ Kutscher</span> Der Kutscher beugt sich vom Bock. Sein Gesicht liegt unter einem breiten Hut. <span class="click">▶ Zitat</span> „Nach Erlengrund? Steigt ein. Nach dem Läuten sollte niemand mehr auf der Straße sein.“</p>
+<p>Der Kutscher heißt <b>Oskar Venn</b>. Er ist ein lebender, verängstigter Mann, der seit Jahren diese Strecke fährt. Er weiß nicht, warum die Straße heute Fremde zu ihm geführt hat.</p>
+<p><b>So spielst du ihn:</b> leise, höflich, stets mit einem Ohr beim Wald.</p>
+<p>Auf Fragen antwortet er:</p>
+<ul>
+<li><b>Wo sind wir?</b> „In Barovia. Falls euch das nichts sagt, tut mir das leid.“</li>
+<li><b>Was ist nach dem Läuten?</b> „Dann öffnen wir keine Türen mehr.“</li>
+<li><b>Wer herrscht hier?</b> Er blickt zum verhängten Fenster. „Ihr werdet seinen Namen noch früh genug hören.“</li>
+</ul>
+<p><b>Falls die Gruppe nicht einsteigt:</b> Oskar beschreibt den Weg. Zu Fuß erreichen sie nach einer unheimlichen Wanderung dasselbe Dorf. Die Entscheidung darf die Atmosphäre verändern, ohne den Einstieg zu blockieren. Dann die nächste Folie mit <b>N</b> überspringen.</p>
+  </aside>
+</section>
+
+<!-- 4 Hinter beschlagenem Glas -->
+<section class="slide" data-title="Hinter beschlagenem Glas">
+  <div class="bg"><div style="background-image:url(img/szene-03-hinter-beschlagenem-glas.jpg)"></div></div>
+  <div class="col" style="top:250px">
+    <h2>Während der Fahrt</h2>
+    <div class="rule"></div>
+    <div class="quote frag">Nur helle Stämme.</div>
+    <div class="quote frag">Drei langsame Schläge.</div>
+  </div>
+  <aside>
+<p>Während der Fahrt kannst du zwei Eindrücke einstreuen:</p>
+<p class="read">Hinter beschlagenem Glas stehen Menschen zwischen den Bäumen. Als ihr genauer hinseht, sind es <span class="click">▶ Satz 1</span> nur helle Stämme.</p>
+<p class="read">Die Pferde bleiben plötzlich stehen. Von draußen hört ihr <span class="click">▶ Satz 2</span> drei langsame Schläge gegen die Kutschenwand. Oskar hält den Atem an. Erst nach einer langen Stille fahren die Pferde weiter.</p>
+  </aside>
+</section>
+
+<!-- 5 Erlengrund -->
+<section class="slide" data-title="Erlengrund" data-music="188_Barovian_Village">
+  <div class="bg"><div style="background-image:url(img/szene-04-erlengrund.jpg)"></div></div>
+  <div class="col" style="top:270px">
+    <h2>Erlengrund</h2>
+    <div class="rule"></div>
+    <div class="quote frag">„… siebenundzwanzig.<br>Achtundzwanzig.“</div>
+  </div>
+  <aside>
+<p class="read">Der Nebel gibt die Straße widerwillig frei. Vor euch liegen vielleicht zwanzig Häuser, eng um einen steinernen Brunnen gedrängt. Die Fensterläden sind geschlossen. Über einer Tür schwingt das Schild eines Gasthauses: eine weiße Gans mit abgeplatztem Kopf. An mehreren Haustüren hängt ein Streifen schwarzen Stoffes. Die kleine Kapelle am Ende des Platzes hat einen Glockenturm. Das Glockenseil hängt abgeschnitten neben ihrer Tür. Aus einem Haus hört ihr jemanden zählen. <span class="click">▶ einblenden</span> „… siebenundzwanzig. Achtundzwanzig.“ Dann beginnt das Zählen von vorn.</p>
+<p>Oskar setzt die Gruppe am Gasthaus ab. Er bleibt bei den Pferden und fährt erst am Morgen weiter. (Das Zählen kommt von Elsbeth in Haus A.)</p>
+<h3>Die Wahrheit für dich als Spielleitung</h3>
+<p>Vor drei Wochen kam <b>Doktor Severin Voss</b> ins Dorf. Er behandelte Kranke kostenlos und wurde in viele Häuser eingeladen.</p>
+<p>Voss ist ein Vampir. Er trank zunächst kleine Mengen Blut und erklärte die zunehmende Schwäche zur „Nebelfieberkrankheit“. Seit einigen Nächten verliert er die Beherrschung: Drei Menschen sind tot, mehrere schwer geschwächt.</p>
+<p>Er haust in einer alten Familiengruft bei der verfallenen Mühle. Zwei Ghule folgen ihm und holen nachts die Toten aus den Häusern.</p>
+<p>Die Totengräberin <b>Marta</b> hat seinen Ruheplatz entdeckt. Voss hält sie in der Gruft gefangen. Heute Nacht soll ihm außerdem <b>Lena</b>, die Tochter der Wirtin, als angebliche Patientin zugeführt werden.</p>
+  </aside>
+</section>
+
+<!-- 5b Karte von Erlengrund -->
+<section class="slide" data-title="Karte von Erlengrund">
+  <div class="bg none map-bg"><div style="background-image:url(img/karte-erlengrund.jpg)"></div></div>
+  <div class="map-title">Erlengrund</div>
+  <div class="frag">
+    <div class="pin" style="left:590px; top:285px">Weiße Gans</div>
+    <div class="pin" style="left:687px; top:540px">Brunnen</div>
+    <div class="pin" style="left:940px; top:465px">Kapelle</div>
+    <div class="pin" style="left:150px; top:430px">Straße</div>
+  </div>
+  <div class="frag">
+    <div class="pin house" style="left:540px; top:690px">A</div>
+    <div class="pin house" style="left:985px; top:255px">B</div>
+    <div class="pin house" style="left:1010px; top:640px">C</div>
+  </div>
+  <div class="frag">
+    <div class="pin" style="left:1200px; top:170px">Mühle</div>
+    <div class="pin" style="left:1470px; top:255px">Grablege</div>
+  </div>
+  <aside>
+<p>Die Karte zeigt den Spielern ganz Erlengrund aus der Vogelperspektive. Zeig sie nach der Ankunft, damit sie wissen, wo was liegt. Du kannst später jederzeit hierher zurückspringen.</p>
+<p>Die Beschriftungen kommen in drei Klicks:</p>
+<ol>
+<li><span class="click">▶ Orte</span> Weiße Gans, Brunnen, Kapelle und die Straße, über die sie gekommen sind.</li>
+<li><span class="click">▶ Häuser</span> Haus A, B und C, die Häuser mit dem schwarzen Stoff an der Tür. A liegt im Süden, B am Pfad zu den Feldern, C mit dem Garten voller Bohnenstangen im Südosten. Einblenden, sobald Alma oder Jorek von den Toten erzählen.</li>
+<li><span class="click">▶ Mühle</span> Mühle und Grablege mit dem Eingang zur Gruft. Erst einblenden, wenn die Gruppe von der Mühle weiß (Fläschchen in Haus A, Schaufel in Haus B, Alma kennt den Weg).</li>
+</ol>
+<p>Der Pfad hinter dem Dorf führt durch die schwarzen Felder zur Mühle. Das ist der Friedhofspfad aus Haus B.</p>
+  </aside>
+</section>
+
+<!-- 6 Die Weiße Gans -->
+<section class="slide" data-title="Die Weiße Gans" data-music="255_The_Hearth_Inn">
+  <div class="bg"><div style="background-image:url(img/szene-05-die-weisse-gans.jpg)"></div></div>
+  <div class="col" style="top:60px">
+    <h2>Die Weiße Gans</h2>
+    <div class="rule"></div>
+    <div class="portraits">
+      <figure class="pt l frag"><div class="img" style="background-image:url(img/p-alma-brenner.jpg)"></div><figcaption><b>Alma Brenner</b>Wirtin der Weißen Gans</figcaption></figure>
+      <figure class="pt l frag"><div class="img" style="background-image:url(img/p-lena-brenner.jpg)"></div><figcaption><b>Lena Brenner</b>ihre Tochter, Schneiderin</figcaption></figure>
+    </div>
+    <div class="quote frag" style="font-size:32px; margin-top:14px">„Ich habe von Erde geträumt.“</div>
+  </div>
+  <aside>
+<h3>Alma Brenner, Wirtin der Weißen Gans <span class="click">▶ Porträt</span></h3>
+<p>Kräftige Hände, schlaflose Augen, eine Schürze, die sie ständig glatt streicht.</p>
+<p class="read">„Essen könnt ihr haben. Ein Zimmer auch. Aber wenn nachher jemand draußen euren Namen ruft, bleibt ihr hier.“</p>
+<ul>
+<li>Sie will ihre Tochter Lena retten.</li>
+<li>Voss hat versprochen, Lena heute Nacht in seiner Unterkunft zu behandeln.</li>
+<li>Alma hat ihm vertraut. Sie schämt sich, an ihm zu zweifeln.</li>
+<li>Sie kennt den Weg zur alten Mühle.</li>
+</ul>
+<h3>Lena Brenner, erkrankte Schneiderin <span class="click">▶ Porträt</span></h3>
+<p>Erwachsen, auffallend blass, mit einem roten Schal um den Hals.</p>
+<p class="read"><span class="click">▶ Zitat</span> „Ich habe von Erde geträumt. Jemand hat von unten an meinen Sarg geklopft. Er sagte, ich müsse Platz machen.“</p>
+<ul>
+<li>Unter dem Schal liegen zwei kleine Wunden.</li>
+<li>Voss hat sie bereits zweimal „untersucht“.</li>
+<li>Sie erinnert sich an nasse Erde an seinen Stiefeln und den Geruch verwelkter Blumen.</li>
+<li>Sie will keinesfalls allein zur Behandlung gehen.</li>
+</ul>
+<p><b>Der Auftrag entsteht im Gespräch:</b> Alma bittet die Fremden, die Todesfälle zu untersuchen und herauszufinden, ob sie Lena dem Arzt anvertrauen kann.</p>
+  </aside>
+</section>
+
+<!-- 7 Die Kapelle -->
+<section class="slide" data-title="Die Kapelle" data-music="335_Abandoned_Chapel">
+  <div class="bg"><div style="background-image:url(img/szene-06-die-kapelle.jpg)"></div></div>
+  <div class="col" style="top:70px">
+    <h2>Die Kapelle</h2>
+    <div class="rule"></div>
+    <figure class="pt l frag" style="margin:0 auto"><div class="img" style="background-image:url(img/p-bruder-jorek.jpg)"></div><figcaption><b>Bruder Jorek</b>Hüter der Kapelle</figcaption></figure>
+    <div class="quote frag" style="font-size:32px; margin-top:10px">„Beim dritten fand ich morgens<br>das Seil auf der Schwelle.“</div>
+  </div>
+  <aside>
+<h3>Bruder Jorek, Hüter der Kapelle <span class="click">▶ Porträt</span></h3>
+<p>Ein alter Mann mit rissigen Lippen, der sich an seinem Gebetsbuch festhält.</p>
+<p class="read"><span class="click">▶ Zitat</span> „Bei den ersten beiden habe ich die Glocke geläutet. Beim dritten fand ich morgens das Seil auf der Schwelle.“</p>
+<ul>
+<li>Er weiß von den Halswunden.</li>
+<li>Er ließ die Toten in ihren Häusern, weil die Totengräberin verschwunden ist.</li>
+<li>Er kann der Gruppe eine alte <b>Totenlaterne</b> geben: Ihr Licht stört den Vampir (im Finale: keine Regeneration innerhalb von 6 m, braucht eine freie Hand).</li>
+<li>Er möchte helfen, traut sich aber nicht allein aus dem Dorf.</li>
+</ul>
+  </aside>
+</section>
+
+<!-- 8 Die Häuser der Stillen -->
+<section class="slide" data-title="Die Häuser der Stillen" data-music="186_Haunted">
+  <div class="bg dim"><div style="background-image:url(img/karte-erlengrund.jpg)"></div></div>
+  <div class="col" style="left:0; right:0; width:auto; top:330px">
+    <div class="big">Die Häuser der Stillen</div>
+  </div>
+  <aside>
+<p>Die Gruppe kann die Häuser in beliebiger Reihenfolge besuchen. Die nächsten drei Folien sind Haus A, B und C. Springe mit den Pfeiltasten in der Reihenfolge, die die Gruppe wählt, oder überspringe ein Haus mit <b>N</b>.</p>
+<p><b>Wichtig beim Leiten:</b> Die entscheidenden Hinweise finden sie, sobald sie passend suchen. Würfe geben zusätzliche Erkenntnisse. Ein misslungener Wurf soll den Weg zur Gruft nicht versperren.</p>
+<p>Für zusätzliche Details passen meist <b>SG 12</b> auf Untersuchung, Wahrnehmung oder Heilkunde.</p>
+  </aside>
+</section>
+
+<!-- 9 Haus A -->
+<section class="slide" data-title="Haus A: Der gedeckte Tisch">
+  <div class="bg"><div style="background-image:url(img/szene-07-der-gedeckte-tisch.jpg)"></div></div>
+  <div class="col" style="top:70px">
+    <div class="kicker">Haus A</div>
+    <h2>Der gedeckte Tisch</h2>
+    <div class="rule"></div>
+    <figure class="pt l frag" style="margin:0 auto"><div class="img" style="background-image:url(img/p-elsbeth.jpg)"></div><figcaption><b>Elsbeth</b>unter dem Tisch</figcaption></figure>
+    <div class="quote frag" style="font-size:32px; margin-top:10px">„Er war doch der Doktor.“</div>
+  </div>
+  <aside>
+<p class="read">Auf dem Herd ist eine Suppe zu einer dunklen Kruste eingekocht. Zwei Teller stehen auf dem Tisch. Auf einem Stuhl sitzt ein Mann mit gesenktem Kopf. Seine Haut spannt sich grau über die Wangenknochen. Unter seinem Kinn liegen zwei dunkle Punkte. Der zweite Teller ist unberührt. Unter dem Tisch bewegt sich etwas.</p>
+<p><span class="click">▶ Porträt</span> Dort kauert <b>Elsbeth</b>, seine überlebende Ehefrau. Sie zählt die Dielenbretter, um nicht zur Leiche sehen zu müssen. Sie berichtet stockend:</p>
+<p class="read"><span class="click">▶ Zitat</span> „Ich habe ihn hereingebeten. Er war doch der Doktor. Er sagte, mein Mann brauche Ruhe. Ich sollte in die Küche gehen.“</p>
+<p><b>Sichere Hinweise:</b></p>
+<ul>
+<li>Voss war unmittelbar vor dem Tod hier.</li>
+<li>Die Haustür wurde nicht aufgebrochen.</li>
+<li>Auf dem Tisch liegt ein Fläschchen mit dem Etikett: <b>„Dr. Voss – Nachtbehandlung, Alte Mühle.“</b></li>
+</ul>
+<p><b>Bei erfolgreicher Untersuchung:</b> Der Tote hat fast kein Blut verloren, das irgendwo im Zimmer zu finden wäre.</p>
+<p>Elsbeth braucht Wasser, Wärme und jemanden, der ihr zuhört. Lass die Gruppe hier etwas bewirken können.</p>
+  </aside>
+</section>
+
+<!-- 10 Haus B -->
+<section class="slide" data-title="Haus B: Das leere Bett">
+  <div class="bg"><div style="background-image:url(img/szene-08-das-leere-bett.jpg)"></div></div>
+  <div class="col" style="top:250px">
+    <div class="kicker">Haus B</div>
+    <h2>Das leere Bett</h2>
+    <div class="rule"></div>
+    <div class="quote frag">„Voss schläft unter<br>den Mühlengräbern.“</div>
+  </div>
+  <aside>
+<p class="read">Das Bett ist sorgfältig gemacht. Auf dem Kissen liegt eine tiefe, dunkle Mulde. Vom Bettrand zieht sich eine Schleifspur durch den Staub bis zum Hintereingang. Im Türrahmen stecken drei abgebrochene Fingernägel.</p>
+<p>Die Verstorbene wurde vergangene Nacht von Ghulen geholt.</p>
+<p><b>Sichere Hinweise:</b></p>
+<ul>
+<li>Die Schleifspur führt zum Friedhofspfad und weiter zur alten Mühle.</li>
+<li>Im Schlamm erkennt man die Abdrücke nackter Füße und einer geschleiften Last.</li>
+<li>Ein Stofffetzen hängt am Gartenzaun. Er gehört zum Leichentuch der Toten.</li>
+</ul>
+<p><b>Zusatzfund:</b> Zwischen Bett und Wand steckt Martas eiserne Grabschaufel. Am Stiel sind die Worte eingeritzt: <span class="click">▶ einblenden</span> <b>„Voss schläft unter den Mühlengräbern.“</b></p>
+<p>Marta ließ die Schaufel hier zurück, bevor sie ihm nachging.</p>
+  </aside>
+</section>
+
+<!-- 11 Haus C -->
+<section class="slide" data-title="Haus C: Die Frau am Fenster">
+  <div class="bg"><div style="background-image:url(img/szene-09-die-frau-am-fenster.jpg)"></div></div>
+  <div class="col" style="top:70px">
+    <div class="kicker">Haus C</div>
+    <h2>Die Frau am Fenster</h2>
+    <div class="rule"></div>
+    <figure class="pt l frag" style="margin:0 auto"><div class="img" style="background-image:url(img/p-greta-falk.jpg)"></div><figcaption><b>Greta Falk</b>hinter der Scheibe</figcaption></figure>
+    <div class="quote frag" style="font-size:32px; margin-top:10px">„Mein Mann steht seit gestern<br>im Garten.“</div>
+  </div>
+  <aside>
+<p class="read"><span class="click">▶ Porträt</span> Eine Frau sitzt hinter der Scheibe. Ihr graues Haar ist ordentlich geflochten. Sie lächelt, als ihr näherkommt. „Endlich“, sagt sie durch das geschlossene Fenster. <span class="click">▶ Zitat</span> „Ihr müsst ihn holen. Mein Mann steht seit gestern im Garten.“ Zwischen den kahlen Bohnenstangen steht eine menschliche Gestalt. Sie bewegt sich nicht.</p>
+<p><b>Greta Falk</b> ist geschwächt, aber lebt. Die Gestalt ist ihr toter Mann, den die Ghule am Zaun zurückließen, als ein Licht sie störte.</p>
+<p>Greta kann berichten:</p>
+<ul>
+<li>Nachts hörte sie Kratzen und ein kauendes Geräusch.</li>
+<li>Eine Gestalt im dunklen Mantel befahl: „Zurück zur Gruft.“</li>
+<li>Als sie eine Laterne ans Fenster stellte, wichen die gebeugten Kreaturen zurück.</li>
+</ul>
+<p>Ihr Mann trägt noch seinen Ehering. Ihn zu bergen und ordentlich aufzubahren ist eine kleine, menschliche Aufgabe zwischen all dem Grauen.</p>
+<p><b>Wenn die Ermittlung stockt:</b> Ein Ghul erscheint am Dorfrand und schleppt ein Leichentuch hinter sich her. Er flieht auf dem Pfad zur Mühle und hinterlässt eine deutliche Spur.</p>
+  </aside>
+</section>
+
+<!-- 12 Zur alten Mühle -->
+<section class="slide" data-title="Zur alten Mühle" data-music="180_Abandoned_Windmill">
+  <div class="bg"><div style="background-image:url(img/szene-10-der-weg-zur-muehle.jpg)"></div></div>
+  <div class="col" style="top:260px">
+    <h2>Zur alten Mühle</h2>
+    <div class="rule"></div>
+    <div class="quote frag">Ein Geräusch wie ein Messer<br>über einem Teller.</div>
+  </div>
+  <aside>
+<p class="read">Hinter dem letzten Haus endet das Pflaster. Ein schmaler Pfad führt zwischen schwarzen Feldern hindurch. An den Halmen hängt Tau, obwohl die Luft eisig ist. Vor euch steht die Mühle. Ihre Flügel fehlen. Dahinter neigen sich die Grabsteine einer kleinen Familiengrablege. Unter einer offenen Steintür flackert Kerzenlicht. Dann hört ihr ein Schaben. <span class="click">▶ einblenden</span> Ein Geräusch wie ein Messer über einem Teller.</p>
+<p>Die Gruppe kann sich anschleichen, die Mühle erkunden oder direkt zur Gruft gehen. Geht sie direkt zur Gruft, die nächste Folie mit <b>N</b> überspringen.</p>
+  </aside>
+</section>
+
+<!-- 13 In der Mühle -->
+<section class="slide" data-title="In der Mühle">
+  <div class="bg"><div style="background-image:url(img/szene-11-in-der-muehle.jpg)"></div></div>
+  <div class="col" style="top:250px">
+    <h2>In der Mühle</h2>
+    <div class="rule"></div>
+    <div class="quote frag" style="font-size:36px">„Der Sarg steht hinter dem eisernen Gitter. Wenn er fällt, dort nach ihm suchen.“</div>
+  </div>
+  <aside>
+<p><b>Nützlicher Fund in der Mühle:</b> Ein eingeschlagener Holzpflock, ein Hammer und Martas Tasche. Darin liegt eine Notiz: <span class="click">▶ einblenden</span></p>
+<p class="read">„Der Sarg steht hinter dem eisernen Gitter. Wenn er fällt, dort nach ihm suchen.“</p>
+<p>Gib Gelegenheit für eine kurze Rast, wenn die Gruppe sie braucht. Währenddessen trägt der Wind einmal Lenas Namen vom Dorf herüber.</p>
+  </aside>
+</section>
+
+<!-- 14 Die Ghule am Grab -->
+<section class="slide" data-title="Die Ghule am Grab" data-music="37_Catacombs">
+  <div class="bg"><div style="background-image:url(img/szene-12-der-vorraum-der-gruft.jpg)"></div></div>
+  <div class="col" style="top:70px">
+    <h2>Die Ghule am Grab</h2>
+    <div class="rule"></div>
+    <figure class="pt l frag" style="margin:0 auto"><div class="img" style="background-image:url(img/p-ghul.jpg)"></div></figure>
+    <div class="quote frag" style="font-size:34px; margin-top:4px">„Lasst meine Gäste hinein.“</div>
+  </div>
+  <aside>
+<p>Zwei Ghule kauern im abgesenkten Vorraum der Gruft über einem Leichentuch.</p>
+<p class="read"><span class="click">▶ Ghul</span> Das erste Wesen hebt den Kopf. An seinem Kinn hängt ein Stück schwarzer Stoff. Es zieht die Lippen zurück, als müsste es sich erst erinnern, wie ein Lächeln funktioniert. Hinter ihm richtet sich ein zweites auf. Aus der Tiefe sagt eine ruhige Stimme: <span class="click">▶ Zitat</span> „Lasst meine Gäste hinein.“ Die Wesen springen.</p>
+<h3>Vereinfachte Ghule, zwei Gegner</h3>
+<ul>
+<li><b>RK 12, TP 18 je Ghul, Bewegung 9 m</b></li>
+<li><b>Klauen:</b> +4 zum Treffen, Reichweite 1,5 m, <b>1W6 + 2 Schaden</b></li>
+<li>Einmal pro Ghul: Nach einem Treffer <b>Konstitutionsrettungswurf SG 11</b>. Bei Misslingen kann das Ziel bis zum Ende seines nächsten Zuges keine Reaktionen einsetzen.</li>
+<li>Keine weiteren Sonderregeln nötig.</li>
+</ul>
+<p>Die Ghule sind hungrig und unkoordiniert. Sie verteilen ihre Angriffe, klettern über Sarkophage und versuchen, Verwundete von den anderen zu trennen.</p>
+<p><b>Geländevorteile:</b> Eine steinerne Grabplatte lässt sich gemeinsam umstoßen. Ein Kohlebecken kann ausgeschüttet werden. Belohne solche Ideen mit Vorteil oder etwa <b>1W6 zusätzlichem Schaden</b>.</p>
+<p>Nach dem Kampf bleibt ein kurzer Moment, um zu heilen und Marta hinter einem Gitter zu entdecken.</p>
+<p><b>Für eine schwächere Gruppe:</b> nur ein Ghul.</p>
+  </aside>
+</section>
+
+<!-- 15 Doktor Voss -->
+<section class="slide" data-title="Doktor Voss" data-music="102_Vampire_Castle">
+  <div class="bg"><div style="background-image:url(img/szene-13-der-sarg-hinter-dem-gitter.jpg)"></div></div>
+  <div class="col" style="top:60px">
+    <h2>Doktor Voss</h2>
+    <div class="rule"></div>
+    <figure class="pt xl frag" style="margin:0 auto"><div class="img" style="background-image:url(img/p-doktor-voss.jpg)"></div></figure>
+    <div class="quote frag" style="font-size:32px; margin-top:0">„Ich nehme an, ihr seid<br>wegen der Kranken hier.“</div>
+  </div>
+  <aside>
+<p class="read"><span class="click">▶ Porträt</span> Ein Mann steht neben einem offenen Steinsarg. Sein schwarzer Gehrock ist sauber. In einer Hand hält er ein weißes Tuch, mit dem er sorgfältig seine Finger abwischt. „Ihr habt meine Gehilfen getötet.“ Er betrachtet euch mit dem erschöpften Blick eines Arztes nach einer langen Nacht. <span class="click">▶ Zitat</span> „Ich nehme an, ihr seid wegen der Kranken hier.“ Als er lächelt, seht ihr die langen Eckzähne.</p>
+<p><b>Severin Voss</b> ist höflich, eitel und entsetzlich hungrig. Er hält seine Opfer für einen angemessenen Preis seines Überlebens.</p>
+<p>Er versucht zunächst zu verhandeln:</p>
+<p class="read">„Nehmt die Totengräberin. Nehmt mein Gold. Verlasst dieses Dorf noch heute Nacht.“</p>
+<p>Wenn die Gruppe ihm die Toten vorhält:</p>
+<p class="read">„Ihr esst, um zu leben. Ich ebenfalls. Der Unterschied ist, dass ihr eure Mahlzeiten selten beim Namen kennt.“</p>
+<p>Wenn Marta ruft oder der Kampf beginnt: nächste Folie.</p>
+  </aside>
+</section>
+
+<!-- 16 Die Laterne -->
+<section class="slide" data-title="Die Laterne!">
+  <div class="bg zoom"><div style="background-image:url(img/szene-13-der-sarg-hinter-dem-gitter.jpg)"></div></div>
+  <div class="col" style="top:70px">
+    <div class="portraits">
+      <figure class="pt l"><div class="img" style="background-image:url(img/p-marta.jpg)"></div><figcaption><b>Marta</b>die Totengräberin</figcaption></figure>
+    </div>
+    <div class="quote frag" style="margin-top:14px">„Die Laterne! Haltet sie offen!<br>Er verträgt ihr Licht nicht!“</div>
+  </div>
+  <aside>
+<p><b>Marta lebt</b>, ist gefesselt und kann selbst laufen, sobald sie befreit wird. Sie ruft: <span class="click">▶ Zitat</span></p>
+<p class="read">„Die Laterne! Haltet sie offen! Er verträgt ihr Licht nicht!“</p>
+<h3>Voss, geschwächter Vampir</h3>
+<p>Er ist durch langen Hunger geschwächt. Diese Werte ersetzen für diesen Abend einen regulären Vampir.</p>
+<ul>
+<li><b>RK 14, TP 52, Bewegung 9 m</b></li>
+<li><b>Ein Angriff pro Zug:</b> +5 zum Treffen, <b>1W8 + 3 Schaden</b></li>
+<li><b>Biss, einmal im Kampf:</b> Gegen ein bereitwilliges oder von ihm gepacktes Ziel; +5 zum Treffen, <b>2W6 Schaden</b>, Voss heilt die tatsächlich verursachten Schadenspunkte. Das Packen braucht zuvor eine eigene Aktion und einen vergleichenden Athletikwurf.</li>
+<li><b>Regeneration:</b> Zu Beginn seines Zuges heilt er 5 TP, solange er mindestens 1 TP hat.</li>
+<li><b>Totenlaterne:</b> Innerhalb von 6 m um die offen getragene Laterne funktioniert seine Regeneration nicht. Die Laterne braucht eine freie Hand.</li>
+<li><b>Flucht in den Sarg:</b> Bei 0 TP wird Voss zu Nebel und zieht in seinen sichtbaren Sarg. Dort nimmt er hilflos wieder Gestalt an.</li>
+</ul>
+<p>Ein Charakter kann am Sarg mit einer Aktion Pflock und Hammer einsetzen und ihn endgültig vernichten. Dafür ist nach gewonnenem Kampf kein weiterer Wurf nötig.</p>
+<h3>So wird der Kampf lebendig</h3>
+<ul>
+<li>Voss versucht zuerst, den Laternenhalter wegzulocken.</li>
+<li>Er stößt Kerzenständer um und nutzt Säulen als Deckung.</li>
+<li>Er bietet einzelnen Charakteren Wissen, Reichtum oder einen Weg durch den Nebel.</li>
+<li>Unter 15 TP verliert er seine Ruhe: „Ihr versteht nicht, was dort oben auf mich wartet!“</li>
+</ul>
+<p><b>Für eine schwächere Gruppe:</b> Nur ein Ghul, Voss hat 38 TP. <b>Für eine stärkere Gruppe:</b> Voss hat 65 TP; erhöhe zuerst seine Ausdauer, bevor du zusätzliche Angriffe gibst.</p>
+<p>Wenn die Gruppe verhandelt oder ihn vertreibt, kann sie Marta trotzdem retten. Voss bleibt dann eine Bedrohung, deren Versteck nun bekannt ist.</p>
+  </aside>
+</section>
+
+<!-- 17 Der Brief -->
+<section class="slide" data-title="Der Brief">
+  <div class="bg"><div style="background-image:url(img/szene-14-der-brief.jpg)"></div></div>
+  <div class="col" style="top:110px; text-align:left">
+    <div class="quote frag" style="font-size:34px; line-height:1.35; margin-top:0">
+      <b style="font-style:normal; font-family:'IM Fell English SC', serif; color:var(--header)">Voss,</b><br><br>
+      Eure Unordnung ist mir zu Ohren gekommen.<br><br>
+      Erlengrund liegt auf meinem Land. Ihr werdet lernen, Euch als Gast zu benehmen.<br><br>
+      Erscheint nach dem nächsten Vollmond auf meinem Schloss.<br><br>
+      <span style="display:block; text-align:right; font-style:normal; font-family:'IM Fell English SC', serif; color:var(--header)">S.</span>
+    </div>
+  </div>
+  <aside>
+<p>In einer verschlossenen Schatulle liegen <b>60 Goldstücke</b>, die persönlichen Schmuckstücke der Opfer und ein Brief mit gebrochenem rotem Siegel. Auf dem Siegel: ein Schloss über einem steilen Felsen.</p>
+<p>Lass die Spieler den Brief zuerst nur sehen. <span class="click">▶ Brief einblenden</span> Wenn jemand ihn liest, blende ihn ein und lies ihn vor.</p>
+<p><b>Auf der Folie ohne Namen:</b> Dort steht „auf meinem Schloss“ und nur „S.“ als Unterschrift. Im Original lautet der Brief: „Erscheint nach dem nächsten Vollmond auf <b>Schloss Ravenloft</b>. <b>S. von Zarovich</b>“. Ob du die Namen vorliest, entscheidest du.</p>
+<p>Voss fürchtete den Absender weit mehr als die Dorfbewohner.</p>
+  </aside>
+</section>
+
+<!-- 18 Das Schloss über dem Tal -->
+<section class="slide" data-title="Das Schloss über dem Tal" data-music="148_Barovian_Castle">
+  <div class="bg"><div style="background-image:url(img/szene-15-das-schloss-ueber-dem-tal.jpg)"></div></div>
+  <div class="col" style="top:300px">
+    <div class="quote frag" style="font-size:44px">Für einen Augenblick<br>brennt Licht in einem<br>seiner hohen Fenster.</div>
+  </div>
+  <aside>
+<p>Wenn die Gruppe die Gruft verlässt:</p>
+<p class="read">Über den Feldern wird der Himmel grau. Zum ersten Mal könnt ihr über den Nebel hinwegsehen. Hoch über dem Tal erhebt sich ein dunkler Felsen. Auf seiner Spitze steht ein gewaltiges Schloss. Seine Türme verlieren sich in den Wolken. Neben euch bekreuzigt sich Marta. „Ravenloft.“ <span class="click">▶ einblenden</span> Für einen Augenblick brennt Licht in einem seiner hohen Fenster. Dann zieht der Nebel wieder auf.</p>
+  </aside>
+</section>
+
+<!-- 19 Wohin soll es gehen? -->
+<section class="slide" data-title="Wohin soll es gehen?" data-music="134_Carriage_Journey">
+  <div class="bg"><div style="background-image:url(img/szene-02-die-schwarze-kutsche.jpg)"></div></div>
+  <div class="col" style="top:110px">
+    <figure class="pt l" style="margin:0 auto"><div class="img" style="background-image:url(img/p-oskar-venn.jpg)"></div><figcaption><b>Oskar Venn</b></figcaption></figure>
+    <div class="quote frag" style="margin-top:14px">„Nun. Wohin soll es gehen?“</div>
+  </div>
+  <aside>
+<p>Zum Abschluss findet die Gruppe im Dorf offene Fensterläden und Alma, die Lena in den Armen hält. Die Geretteten sind noch schwach, aber ansprechbar. Oskar wartet bei der Kutsche.</p>
+<p class="read">„Nun“, sagt er und öffnet die Tür. <span class="click">▶ einblenden</span> „Wohin soll es gehen?“</p>
+<p>Die letzte Folie „Die Leute von Erlengrund“ ist fürs Nachgespräch.</p>
+  </aside>
+</section>
+
+<!-- 20 Die Leute von Erlengrund -->
+<section class="slide" data-title="Die Leute von Erlengrund">
+  <div class="gallery" style="inset:40px 60px">
+    <div class="kicker">Nachgespräch</div>
+    <h2>Die Leute von Erlengrund</h2>
+    <div class="portraits" style="margin-top:20px; gap:0 24px">
+      <figure class="pt" style="width:220px"><div class="img" style="background-image:url(img/p-oskar-venn.jpg)"></div><figcaption><b>Oskar Venn</b>der Kutscher</figcaption></figure>
+      <figure class="pt" style="width:220px"><div class="img" style="background-image:url(img/p-alma-brenner.jpg)"></div><figcaption><b>Alma Brenner</b>die Wirtin</figcaption></figure>
+      <figure class="pt" style="width:220px"><div class="img" style="background-image:url(img/p-lena-brenner.jpg)"></div><figcaption><b>Lena Brenner</b>die Schneiderin</figcaption></figure>
+      <figure class="pt" style="width:220px"><div class="img" style="background-image:url(img/p-bruder-jorek.jpg)"></div><figcaption><b>Bruder Jorek</b>Hüter der Kapelle</figcaption></figure>
+      <figure class="pt" style="width:220px"><div class="img" style="background-image:url(img/p-elsbeth.jpg)"></div><figcaption><b>Elsbeth</b>die Witwe</figcaption></figure>
+      <figure class="pt" style="width:220px"><div class="img" style="background-image:url(img/p-greta-falk.jpg)"></div><figcaption><b>Greta Falk</b>die Frau am Fenster</figcaption></figure>
+      <figure class="pt" style="width:220px"><div class="img" style="background-image:url(img/p-marta.jpg)"></div><figcaption><b>Marta</b>die Totengräberin</figcaption></figure>
+      <figure class="pt" style="width:220px"><div class="img" style="background-image:url(img/p-doktor-voss.jpg)"></div><figcaption><b>Doktor Voss</b>der Arzt</figcaption></figure>
+      <figure class="pt" style="width:220px"><div class="img" style="background-image:url(img/p-ghul.jpg)"></div><figcaption><b>Der Ghul</b>sein Gehilfe</figcaption></figure>
+    </div>
+  </div>
+  <div style="position:absolute; left:0; right:0; bottom:22px; text-align:center; font-style:italic; font-size:20px; color:var(--muted)">Musik: Tabletop Audio (tabletopaudio.com), CC BY-NC-ND 4.0</div>
+  <aside>
+<h3>Nachgespräch</h3>
+<p>Unten auf der Folie steht der Hinweis auf die Musik (die Lizenz von Tabletop Audio verlangt die Namensnennung).</p>
+<p>Die Galerie zeigt alle Figuren des Abends. Gut als Einstieg: Wem hat die Gruppe vertraut, und wem zu Unrecht? Was machen die Charaktere mit dem Brief und dem Schloss über dem Tal?</p>
+  </aside>
+</section>
+
+</div>
+
+<div id="progress"></div>
+<div id="pv">
+  <div id="pv-bar">
+    <div class="title" id="pv-title"></div>
+    <span id="pv-count"></span>
+    <span id="pv-timer" title="Klicken setzt die Uhr zurück">0:00</span>
+    <button id="pv-prev">‹ Zurück</button>
+    <button id="pv-nextbtn">Weiter ›</button>
+    <button class="open" id="pv-open">Folien-Fenster öffnen</button>
+  </div>
+  <div id="pv-cur"></div>
+  <div id="pv-side">
+    <div class="lbl" id="pv-nextlbl">Als Nächstes</div>
+    <iframe id="pv-next" title="Nächste Folie"></iframe>
+    <div id="pv-frag"></div>
+    <div id="pv-music">
+      <div class="lbl">Musik</div>
+      <div id="pv-mstat"></div>
+      <div class="row">
+        <button id="pv-mplay">Pause</button>
+        <button id="pv-mauto" title="Musik wechselt automatisch mit den Folien">Auto</button>
+        <button id="pv-mstop">Stille</button>
+      </div>
+      <div class="row">
+        <select id="pv-mtrack" title="Track von Hand wählen"></select>
+        <input type="range" id="pv-mvol" min="0" max="100" title="Lautstärke">
+      </div>
+    </div>
+    <div id="pv-help">
+      <b>So geht's:</b> Mit „Folien-Fenster öffnen“ ein zweites Fenster öffnen und nur dieses in Discord teilen. Gesteuert wird hier: <b>Pfeiltasten</b>, <b>Leertaste</b> oder die Knöpfe oben. <b>N</b> springt zur nächsten Folie, ohne den Rest einzublenden. Beide Fenster bleiben synchron, auch wenn du im Folien-Fenster klickst.<br>
+      Die Uhr misst die Zeit seit dem Start, ein Klick setzt sie zurück.
+    </div>
+  </div>
+</div>
+<div id="sl"></div>
+<button id="sound-btn">Ton einschalten</button>
+
+<script>
+(function () {
+  var params = new URLSearchParams(location.search);
+  var mode = params.has('presenter') ? 'presenter' : params.has('preview') ? 'preview' : 'audience';
+  if (mode !== 'audience') document.body.classList.add(mode);
+
+  var stage = document.getElementById('stage');
+  var slides = [].slice.call(document.querySelectorAll('.slide'));
+  var sl = document.getElementById('sl');
+  var bar = document.getElementById('progress');
+  var cur = 0, shown = 0;
+
+  // Synchronisation zwischen Referenten- und Folienfenster (gleicher Browser)
+  var chan = null;
+  try { chan = new BroadcastChannel('erlengrund-praesentation'); } catch (e) {}
+  function send(msg) {
+    if (mode === 'preview') return;
+    if (chan) chan.postMessage(msg);
+    try { localStorage.setItem('erlengrund-sync', JSON.stringify({ m: msg, t: Date.now() })); } catch (e) {}
+  }
+  function receive(msg) {
+    if (mode === 'preview' || !msg) return;
+    if (msg.type === 'state') apply(msg.i, msg.f, true);
+    else if (msg.type === 'hello' && mode === 'presenter') { send({ type: 'state', i: cur, f: shown }); send({ type: 'music', m: music }); }
+    else if (msg.type === 'music' && mode === 'audience') { music = msg.m; musicUpdate(); }
+    else if (msg.type === 'musicstatus' && mode === 'presenter') { musicText = msg.text; updateMusicPanel(); }
+  }
+  if (chan) chan.onmessage = function (e) { receive(e.data); };
+  window.addEventListener('storage', function (e) {
+    if (e.key !== 'erlengrund-sync' || !e.newValue || chan) return;
+    try { receive(JSON.parse(e.newValue).m); } catch (err) {}
+  });
+
+  function fit() {
+    var box = mode === 'presenter' ? document.getElementById('pv-cur').getBoundingClientRect()
+      : { left: 0, top: 0, width: window.innerWidth, height: window.innerHeight };
+    var s = Math.min(box.width / 1600, box.height / 900);
+    stage.style.left = (box.left + box.width / 2) + 'px';
+    stage.style.top = (box.top + box.height / 2) + 'px';
+    stage.style.transform = 'translate(-50%, -50%) scale(' + s + ')';
+  }
+  function frags(i) { return [].slice.call(slides[i].querySelectorAll('.frag')); }
+
+  function apply(i, f, remote) {
+    i = Math.max(0, Math.min(slides.length - 1, i));
+    var all = frags(i);
+    if (f < 0) f = all.length;
+    f = Math.max(0, Math.min(all.length, f));
+    if (i !== cur || !slides[i].classList.contains('active')) {
+      slides.forEach(function (s, k) { s.classList.toggle('active', k === i); });
+    }
+    all.forEach(function (el, k) { el.classList.toggle('on', k < f); });
+    cur = i; shown = f;
+    var a = slides[i].querySelector('aside');
+    sl.innerHTML = '<h3>' + (i + 1) + ' / ' + slides.length + ' · ' + slides[i].dataset.title + '</h3>' + (a ? a.innerHTML : '');
+    bar.style.width = ((i + 1) / slides.length * 100) + '%';
+    if (location.hash !== '#' + (i + 1)) history.replaceState(null, '', location.pathname + location.search + '#' + (i + 1));
+    if (mode === 'presenter') updatePresenter();
+    musicUpdate();
+    if (!remote) send({ type: 'state', i: cur, f: shown });
+  }
+  function next() {
+    if (shown < frags(cur).length) apply(cur, shown + 1);
+    else if (cur < slides.length - 1) apply(cur + 1, 0);
+  }
+  function prev() {
+    if (shown > 0) apply(cur, shown - 1);
+    else if (cur > 0) apply(cur - 1, -1);
+  }
+  function fullscreen() {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen && document.documentElement.requestFullscreen();
+    else document.exitFullscreen && document.exitFullscreen();
+  }
+
+  // Referenten-Ansicht
+  var nextFrame = document.getElementById('pv-next');
+  var t0 = Date.now();
+  function updatePresenter() {
+    document.getElementById('pv-title').textContent = slides[cur].dataset.title;
+    document.getElementById('pv-count').textContent = (cur + 1) + ' / ' + slides.length;
+    var rest = frags(cur).length - shown;
+    document.getElementById('pv-frag').textContent = rest > 0
+      ? 'Auf dieser Folie kommt noch ' + rest + (rest === 1 ? ' Element.' : ' Elemente.')
+      : '';
+    var last = cur >= slides.length - 1;
+    document.getElementById('pv-nextlbl').textContent = last ? 'Letzte Folie' : 'Als Nächstes: ' + slides[cur + 1].dataset.title;
+    var src = location.pathname + '?preview#' + (last ? cur + 1 : cur + 2);
+    if (nextFrame.dataset.src !== src) { nextFrame.dataset.src = src; nextFrame.src = src; }
+  }
+  if (mode === 'presenter') {
+    document.getElementById('pv-prev').onclick = prev;
+    document.getElementById('pv-nextbtn').onclick = next;
+    document.getElementById('pv-open').onclick = function () {
+      window.open(location.pathname + '#' + (cur + 1), 'erlengrund-folien', 'width=1280,height=760');
+    };
+    var timer = document.getElementById('pv-timer');
+    timer.onclick = function () { t0 = Date.now(); };
+    setInterval(function () {
+      var s = Math.floor((Date.now() - t0) / 1000);
+      timer.textContent = Math.floor(s / 60) + ':' + ('0' + s % 60).slice(-2);
+    }, 1000);
+  }
+
+  // Musik: Tabletop-Audio-Tracks aus dem Ordner musik/. Gespielt wird nur im Folien-Fenster,
+  // damit der Ton mit dem Discord-Stream mitgeht; die Referenten-Ansicht steuert nur.
+  var music = { auto: true, track: null, paused: false, vol: 0.5 };
+  var musicText = 'Noch kein Folien-Fenster offen';
+  var audio = null, audioTrack = null, fadeTimer = null;
+  function slideTrack(i) {
+    for (var k = i; k >= 0; k--) if (slides[k].hasAttribute('data-music')) return slides[k].getAttribute('data-music') || null;
+    return null;
+  }
+  function wantedTrack() { return music.auto ? slideTrack(cur) : music.track; }
+  function trackName(t) { return t ? t.replace(/^\d+_/, '').replace(/_/g, ' ') : 'Stille'; }
+  function musicStatus(text) { send({ type: 'musicstatus', text: text }); }
+  function fadeTo(target, done) {
+    clearInterval(fadeTimer);
+    fadeTimer = setInterval(function () {
+      var v = audio.volume;
+      if (Math.abs(v - target) <= 0.04) { audio.volume = target; clearInterval(fadeTimer); if (done) done(); }
+      else audio.volume = v + (target > v ? 0.04 : -0.04);
+    }, 60);
+  }
+  function playAudio() {
+    var p = audio.play();
+    if (p && p.then) p.then(function () {
+      document.getElementById('sound-btn').style.display = 'none';
+      fadeTo(music.vol);
+    }).catch(function (e) {
+      if (e.name === 'NotAllowedError') {
+        document.getElementById('sound-btn').style.display = 'block';
+        musicStatus('Der Browser blockiert den Ton: im Folien-Fenster einmal auf „Ton einschalten“ klicken');
+      }
+    });
+  }
+  function musicUpdate() {
+    if (mode === 'presenter') { updateMusicPanel(); return; }
+    if (mode !== 'audience') return;
+    if (!audio) {
+      audio = new Audio(); audio.loop = true; audio.volume = 0;
+      audio.onerror = function () { musicStatus('Datei fehlt: musik/' + audioTrack + '.mp3'); };
+      audio.onplaying = function () { musicStatus('Läuft: ' + trackName(audioTrack)); };
+      document.getElementById('sound-btn').onclick = function () { playAudio(); };
+    }
+    var t = wantedTrack();
+    if (!t || music.paused) {
+      if (!audio.paused) fadeTo(0, function () { audio.pause(); });
+      musicStatus(t ? 'Pausiert: ' + trackName(t) : 'Stille');
+      return;
+    }
+    if (t !== audioTrack) {
+      var start = function () { audioTrack = t; audio.src = 'musik/' + t + '.mp3'; playAudio(); };
+      if (!audio.paused && audioTrack) fadeTo(0, start); else start();
+    } else if (audio.paused) playAudio();
+    else fadeTo(music.vol);
+  }
+  function updateMusicPanel() {
+    if (mode !== 'presenter') return;
+    var t = wantedTrack();
+    document.getElementById('pv-mstat').innerHTML = (music.paused ? 'Pausiert: ' : 'Soll: ') + trackName(t) +
+      (music.auto ? '' : ' (von Hand)') + '<small>' + musicText + '</small>';
+    document.getElementById('pv-mplay').textContent = music.paused ? 'Weiter' : 'Pause';
+    document.getElementById('pv-mauto').classList.toggle('on', music.auto);
+    document.getElementById('pv-mtrack').value = music.auto ? '' : (music.track || '-');
+    document.getElementById('pv-mvol').value = Math.round(music.vol * 100);
+  }
+  function setMusic(change) {
+    for (var k in change) music[k] = change[k];
+    send({ type: 'music', m: music });
+    updateMusicPanel();
+  }
+  if (mode === 'presenter') {
+    var sel = document.getElementById('pv-mtrack');
+    var seen = {};
+    sel.innerHTML = '<option value="">Track wählen …</option><option value="-">Stille</option>';
+    slides.forEach(function (s) {
+      var t = s.getAttribute('data-music');
+      if (t && !seen[t]) { seen[t] = 1; sel.innerHTML += '<option value="' + t + '">' + trackName(t) + '</option>'; }
+    });
+    sel.onchange = function () { if (sel.value) setMusic({ auto: false, track: sel.value === '-' ? null : sel.value, paused: false }); sel.blur(); };
+    document.getElementById('pv-mplay').onclick = function () { setMusic({ paused: !music.paused }); this.blur(); };
+    document.getElementById('pv-mauto').onclick = function () { setMusic({ auto: true, paused: false }); this.blur(); };
+    document.getElementById('pv-mstop').onclick = function () { setMusic({ auto: false, track: null }); this.blur(); };
+    document.getElementById('pv-mvol').oninput = function () { setMusic({ vol: this.value / 100 }); };
+    document.getElementById('pv-mvol').onchange = function () { this.blur(); };
+  }
+
+  if (mode === 'preview') {
+    window.addEventListener('hashchange', function () { apply(parseInt(location.hash.slice(1), 10) - 1 || 0, -1, true); });
+  } else {
+    document.addEventListener('keydown', function (e) {
+      var k = e.key;
+      if (/^(SELECT|INPUT)$/.test(e.target.tagName)) return;
+      if (k === 'ArrowRight' || k === 'ArrowDown' || k === ' ' || k === 'PageDown' || k === 'Enter') { e.preventDefault(); next(); }
+      else if (k === 'ArrowLeft' || k === 'ArrowUp' || k === 'PageUp' || k === 'Backspace') { e.preventDefault(); prev(); }
+      else if (k === 'n' || k === 'N') { if (cur < slides.length - 1) apply(cur + 1, 0); }
+      else if (k === 'Home') apply(0, 0);
+      else if (k === 'End') apply(slides.length - 1, -1);
+      else if (k === 'f' || k === 'F') fullscreen();
+      else if ((k === 'v' || k === 'V') && mode === 'audience') sl.classList.toggle('open');
+      else if (k === 'p' || k === 'P') window.open(location.pathname + '?presenter#' + (cur + 1), 'erlengrund-referent');
+    });
+    stage.addEventListener('click', function (e) {
+      var r = stage.getBoundingClientRect();
+      (e.clientX < r.left + r.width / 4 ? prev : next)();
+    });
+    var tx = null;
+    document.addEventListener('touchstart', function (e) { tx = e.touches[0].clientX; }, { passive: true });
+    document.addEventListener('touchend', function (e) {
+      if (tx === null) return;
+      var dx = e.changedTouches[0].clientX - tx; tx = null;
+      if (Math.abs(dx) > 50) (dx < 0 ? next : prev)();
+    });
+  }
+  window.addEventListener('resize', fit);
+
+  fit();
+  var start = parseInt(location.hash.slice(1), 10);
+  apply(isNaN(start) ? 0 : start - 1, mode === 'preview' ? -1 : 0, true);
+  if (mode === 'audience') send({ type: 'hello' });
+})();
+</script>
+</body>
+</html>
